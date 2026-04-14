@@ -8,6 +8,11 @@ BYPASS_TOOL_CONSENT = os.getenv("BYPASS_TOOL_CONSENT", "true")
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 
+# ── Per-agent models (fall back to MODEL_ID if not set) ─────────────
+RESEARCHER_MODEL_ID = os.getenv("RESEARCHER_MODEL_ID", "")
+ANALYST_MODEL_ID = os.getenv("ANALYST_MODEL_ID", "")
+WRITER_MODEL_ID = os.getenv("WRITER_MODEL_ID", "")
+
 # ── Feature flags (set to "true" to enable) ──────────────────────────
 ENABLE_MCP = os.getenv("ENABLE_MCP", "false").lower() == "true"
 ENABLE_MULTI_AGENT = os.getenv("ENABLE_MULTI_AGENT", "false").lower() == "true"

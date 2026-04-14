@@ -17,19 +17,16 @@ from typing import Any
 from strands import Agent
 
 from ..models.bedrock import load_model
+from ..prompts import load_prompt
+from .config import RESEARCHER_MODEL_ID, ANALYST_MODEL_ID, WRITER_MODEL_ID
 
 log = logging.getLogger(__name__)
 
 
 def _build_researcher(tools: list | None = None) -> Agent:
     return Agent(
-        model=load_model(),
-        system_prompt=(
-            "You are a Researcher Agent. "
-            "1. Use your tools to gather relevant information from available sources. "
-            "2. Include source references when possible. "
-            "3. Keep findings under 500 words."
-        ),
+        model=load_model(RESEARCHER_MODEL_ID),
+        system_prompt=load_prompt("researcher"),
         tools=tools or [],
         callback_handler=None,
     )
@@ -37,26 +34,16 @@ def _build_researcher(tools: list | None = None) -> Agent:
 
 def _build_analyst() -> Agent:
     return Agent(
-        model=load_model(),
-        system_prompt=(
-            "You are an Analyst Agent. "
-            "1. For factual claims: rate accuracy 1-5 and correct if needed. "
-            "2. For research queries: identify 3-5 key insights. "
-            "3. Evaluate source reliability. Keep analysis under 400 words."
-        ),
+        model=load_model(ANALYST_MODEL_ID),
+        system_prompt=load_prompt("analyst"),
         callback_handler=None,
     )
 
 
 def _build_writer() -> Agent:
     return Agent(
-        model=load_model(),
-        system_prompt=(
-            "You are a Writer Agent. "
-            "1. For fact-checks: state whether claims are true or false. "
-            "2. For research: present key insights in a logical structure. "
-            "3. Keep reports under 500 words with brief source mentions."
-        ),
+        model=load_model(WRITER_MODEL_ID),
+        system_prompt=load_prompt("writer"),
         callback_handler=None,
     )
 
