@@ -4,6 +4,10 @@ import os
 import json
 import logging
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from .modules.config import (
     BYPASS_TOOL_CONSENT,
     ENABLE_MCP,

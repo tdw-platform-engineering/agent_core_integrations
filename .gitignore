@@ -18,7 +18,7 @@ venv/
 *~
 .DS_Store
 Thumbs.db
-.bedrock_agentcore.yaml
+# .bedrock_agentcore.yaml
 cdk-outputs.json
 .ruff_cache/
 .mypy_cache/
