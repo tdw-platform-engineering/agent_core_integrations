@@ -1,6 +1,6 @@
 # AgentCore App
 
-Bedrock AgentCore agent with optional modules for MCP, multi-agent orchestration, web search, memory, knowledge base, browser automation, and code interpreter.
+Bedrock AgentCore agent with optional modules for MCP, multi-agent orchestration, web search, memory, knowledge base, and browser automation.
 
 ## Setup
 
@@ -15,8 +15,8 @@ uv pip install -r pyproject.toml
 # With browser support
 uv pip install -r pyproject.toml --extra browser
 
-# Everything
-uv pip install -r pyproject.toml --extra all
+# Install AgentCore CLI
+pip install bedrock-agentcore-starter-toolkit
 ```
 
 ## Run locally
@@ -25,6 +25,112 @@ uv pip install -r pyproject.toml --extra all
 cp .env.example .env
 # edit .env with your AWS credentials/region and feature flags
 python -m app.main
+```
+
+## Deployment
+
+### 1. Configure the agent
+
+```bash
+# Interactive (recommended first time)
+agentcore configure --entrypoint app/main.py --region us-east-1
+
+# Non-interactive with defaults
+agentcore configure \
+  --entrypoint app/main.py \
+  --name agentcore-app \
+  --region us-east-1 \
+  --non-interactive
+
+# With memory enabled
+agentcore configure \
+  --entrypoint app/main.py \
+  --name agentcore-app \
+  --region us-east-1
+
+# Without memory
+agentcore configure \
+  --entrypoint app/main.py \
+  --name agentcore-app \
+  --region us-east-1 \
+  --disable-memory
+```
+
+### 2. Deploy to AWS
+
+```bash
+# Cloud build (default — no Docker required)
+agentcore deploy
+
+# With environment variables for feature flags
+agentcore deploy \
+  --env ENABLE_WEB_SEARCH=true \
+  --env ENABLE_KNOWLEDGE_BASE=true \
+  --env KNOWLEDGE_BASE_ID=your-kb-id
+
+# Local build, deploy to cloud (requires Docker)
+agentcore deploy --local-build
+
+# With custom image tag for versioning
+agentcore deploy --image-tag v1.0.0
+```
+
+### 3. Test the agent
+
+```bash
+# Basic invocation
+agentcore invoke '{"input": "Hello, how are you?", "runtimeSessionId": "test-session-001"}'
+
+# With session persistence
+agentcore invoke '{"input": "What is AWS Lambda?", "runtimeSessionId": "my-session-123"}' \
+  --session-id my-session-123
+
+# Test locally (requires running local agent)
+agentcore invoke '{"input": "test"}' --local
+```
+
+### 4. Check status
+
+```bash
+agentcore status
+agentcore status --verbose
+```
+
+### 5. Destroy resources
+
+```bash
+# Preview what will be destroyed
+agentcore destroy --dry-run
+
+# Destroy with confirmation
+agentcore destroy
+
+# Force destroy without prompts
+agentcore destroy --force --delete-ecr-repo
+```
+
+### Deploy with Docker (alternative)
+
+```bash
+docker build -t agentcore-app .
+docker run --env-file .env -p 8000:8000 agentcore-app
+```
+
+## Memory Management
+
+```bash
+# Create memory (STM only)
+agentcore memory create my_agent_memory --region us-east-1
+
+# Create memory with long-term strategies
+agentcore memory create my_agent_memory \
+  --strategies '[{"semanticMemoryStrategy": {"name": "Facts"}}, {"userPreferenceMemoryStrategy": {"name": "Preferences"}}, {"summaryMemoryStrategy": {"name": "Summaries"}}]' \
+  --wait
+
+# List / check / delete
+agentcore memory list
+agentcore memory status <memory-id>
+agentcore memory delete <memory-id> --wait
 ```
 
 ## Feature Flags
@@ -39,7 +145,6 @@ All modules are opt-in via environment variables:
 | `ENABLE_MEMORY` | `false` | AgentCore Memory (short + long-term) |
 | `ENABLE_KNOWLEDGE_BASE` | `false` | Bedrock Knowledge Base retrieval (RAG) |
 | `ENABLE_BROWSER` | `false` | AgentCore Browser automation (Playwright + Browser-Use) |
-| `ENABLE_CODE_INTERPRETER` | `false` | AgentCore Code Interpreter (sandboxed Python execution) |
 
 ## Module Details
 
@@ -52,7 +157,7 @@ Connects to any MCP-compatible server. Configure transport via:
 
 ### Multi-Agent (`ENABLE_MULTI_AGENT=true`)
 
-Runs a three-agent pipeline: Researcher → Analyst → Writer. All enabled tools are passed to the Researcher agent automatically.
+Runs a three-agent pipeline: Researcher → Analyst → Writer. All enabled tools are passed to the Researcher agent automatically. Each agent can use a different model via `RESEARCHER_MODEL_ID`, `ANALYST_MODEL_ID`, `WRITER_MODEL_ID`.
 
 ### Web Search (`ENABLE_WEB_SEARCH=true`)
 
@@ -70,11 +175,10 @@ Uses the `retrieve` tool to query a Bedrock Knowledge Base. Requires `KNOWLEDGE_
 
 Uses AgentCore Browser (managed Chrome via CDP) with two modes:
 
-- **Agent tool mode**: The LLM decides when to browse. Uses Browser-Use SDK for natural-language → browser actions.
-- **Direct Playwright mode**: Programmatic control for scripted automation.
+- Agent tool mode: The LLM decides when to browse via Browser-Use SDK.
+- Direct Playwright mode: Programmatic control for scripted automation.
 
 ```python
-# Direct Playwright example
 from app.modules.browser_provider import run_playwright_session
 
 def scrape(page):
@@ -85,17 +189,6 @@ def scrape(page):
     page.screenshot(path="search.png")
 
 run_playwright_session(scrape)
-```
-
-### Code Interpreter (`ENABLE_CODE_INTERPRETER=true`)
-
-Gives the agent a sandboxed Python environment to execute code, run calculations, and analyze data via AgentCore Code Interpreter.
-
-## Docker
-
-```bash
-docker build -t agentcore-app .
-docker run --env-file .env -p 8000:8000 agentcore-app
 ```
 
 ## Structure
@@ -114,18 +207,22 @@ app/
 │   ├── knowledge_base_provider.py   # Bedrock KB retrieve tool
 │   ├── multi_agent.py               # Multi-agent orchestration
 │   ├── web_search_provider.py       # http_request tool
-│   ├── browser_provider.py          # AgentCore Browser + Playwright
-│   └── code_interpreter_provider.py # AgentCore Code Interpreter
+│   └── browser_provider.py          # AgentCore Browser + Playwright
 └── prompts/
-    └── system.py                    # System prompt
+    ├── system.md                    # System prompt (main agent)
+    ├── researcher.md                # Researcher agent prompt
+    ├── analyst.md                   # Analyst agent prompt
+    └── writer.md                    # Writer agent prompt
 ```
 
 ## Response format
 
 ```json
 {
-  "sessionid": "...",
-  "txt": "...",
-  "end": true
+  "output": {
+    "answer": "...",
+    "sessionId": "...",
+    "end": true
+  }
 }
 ```
