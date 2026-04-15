@@ -13,6 +13,10 @@ def validate_request(payload: dict) -> AgentRequest:
 
 
 def format_response(session_id: str, text: str, end: bool) -> dict:
-    """Build and validate the structured response."""
-    response = AgentResponse(sessionid=session_id, txt=text, end=end)
+    """Build and validate the structured response.
+
+    Returns the format the bedrock-agent-backend expects:
+      {"output": {"answer": "...", "sessionId": "...", "end": true}}
+    """
+    response = AgentResponse.build(session_id=session_id, text=text, end=end)
     return response.model_dump()

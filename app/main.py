@@ -91,7 +91,8 @@ def parse_agent_output(raw: str) -> tuple[str, bool]:
 async def invoke(payload: dict, context):
     request = validate_request(payload)
     session_id = request.runtime_session_id
-    log.info(f"Session: {session_id} | Input length: {len(request.input)}")
+    user_input = request.question
+    log.info(f"Session: {session_id} | Input length: {len(user_input)}")
 
     tools = _collect_tools()
 
@@ -99,7 +100,7 @@ async def invoke(payload: dict, context):
     if ENABLE_MULTI_AGENT:
         from .modules.multi_agent import run_multi_agent
 
-        report = run_multi_agent(request.input, extra_tools=tools or None)
+        report = run_multi_agent(user_input, extra_tools=tools or None)
         response = format_response(
             session_id=session_id,
             text=report,
@@ -121,7 +122,7 @@ async def invoke(payload: dict, context):
         agent_kwargs["session_manager"] = session_manager
 
     agent = Agent(**agent_kwargs)
-    result = agent(request.input)
+    result = agent(user_input)
     txt, end = parse_agent_output(str(result))
 
     response = format_response(
