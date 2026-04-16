@@ -9,7 +9,7 @@ agents:
     runtime_type: null
     platform: linux/arm64
     container_runtime: docker
-    source_path: 'C:\Users\HP JGARCIA TDW\Documents\GitHub\agent_core_integrations'
+    source_path: 'D:\Github\agent_core_integrations'
     aws:
       execution_role: arn:aws:iam::487615743989:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81
       execution_role_auto_create: false

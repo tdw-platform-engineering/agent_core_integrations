@@ -145,6 +145,10 @@ All modules are opt-in via environment variables:
 | `ENABLE_MEMORY` | `false` | AgentCore Memory (short + long-term) |
 | `ENABLE_KNOWLEDGE_BASE` | `false` | Bedrock Knowledge Base retrieval (RAG) |
 | `ENABLE_BROWSER` | `false` | AgentCore Browser automation (Playwright + Browser-Use) |
+| `ENABLE_THINKING` | `false` | Claude extended/interleaved thinking |
+| `THINKING_BUDGET` | `4096` | Max tokens for thinking budget |
+| `ENABLE_ATHENA` | `false` | SQL queries via Lambda → Athena |
+| `ENABLE_CART` | `false` | Persistent product list per session (DynamoDB) |
 
 ## Module Details
 
@@ -191,6 +195,68 @@ def scrape(page):
 run_playwright_session(scrape)
 ```
 
+### Athena SQL (`ENABLE_ATHENA=true`)
+
+Invokes a Lambda function that executes read-only SQL queries against Athena. Requires `ATHENA_LAMBDA_NAME` (function name or full ARN) and optionally `ATHENA_LAMBDA_REGION` for cross-region invocation.
+
+### Product List (`ENABLE_CART=true`)
+
+Persistent product list per session stored in DynamoDB. The agent uses it to track products, build quotes, and manage budgets across the conversation.
+
+Tools: `add_to_list`, `get_list`, `remove_from_list`, `clear_list`
+
+#### DynamoDB Table Setup
+
+Create the table with AWS CLI:
+
+```bash
+aws dynamodb create-table \
+  --table-name agentcore_product_lists \
+  --attribute-definitions \
+    AttributeName=session_id,AttributeType=S \
+    AttributeName=cveproduct,AttributeType=S \
+  --key-schema \
+    AttributeName=session_id,KeyType=HASH \
+    AttributeName=cveproduct,KeyType=RANGE \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+```
+
+Or with PowerShell:
+
+```powershell
+aws dynamodb create-table `
+  --table-name agentcore_product_lists `
+  --attribute-definitions `
+    AttributeName=session_id,AttributeType=S `
+    AttributeName=cveproduct,AttributeType=S `
+  --key-schema `
+    AttributeName=session_id,KeyType=HASH `
+    AttributeName=cveproduct,KeyType=RANGE `
+  --billing-mode PAY_PER_REQUEST `
+  --region us-east-1
+```
+
+IAM permissions required for the agent's execution role:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:PutItem",
+    "dynamodb:UpdateItem",
+    "dynamodb:DeleteItem",
+    "dynamodb:Query",
+    "dynamodb:BatchWriteItem",
+    "dynamodb:DescribeTable",
+    "dynamodb:CreateTable"
+  ],
+  "Resource": "arn:aws:dynamodb:us-east-1:*:table/agentcore_product_lists"
+}
+```
+
+> Note: The table is also auto-created on first use if the agent's IAM role has `dynamodb:CreateTable` permission.
+
 ## Structure
 
 ```
@@ -207,9 +273,12 @@ app/
 │   ├── knowledge_base_provider.py   # Bedrock KB retrieve tool
 │   ├── multi_agent.py               # Multi-agent orchestration
 │   ├── web_search_provider.py       # http_request tool
-│   └── browser_provider.py          # AgentCore Browser + Playwright
+│   ├── browser_provider.py          # AgentCore Browser + Playwright
+│   ├── athena_provider.py           # SQL queries via Lambda → Athena
+│   └── cart_provider.py             # Persistent product list (DynamoDB)
 └── prompts/
     ├── system.md                    # System prompt (main agent)
+    ├── sql_rules.md                 # SQL schema, templates & rules
     ├── researcher.md                # Researcher agent prompt
     ├── analyst.md                   # Analyst agent prompt
     └── writer.md                    # Writer agent prompt

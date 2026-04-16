@@ -1,5 +1,8 @@
-"""System prompt — loaded from system.md."""
+"""System prompt — loaded from system.md + sql_rules.md."""
 
 from . import load_prompt
 
-SYSTEM_PROMPT = load_prompt("system")
+_system = load_prompt("system")
+_sql_rules = load_prompt("sql_rules")
+
+SYSTEM_PROMPT = f"{_system}\n\n{_sql_rules}"

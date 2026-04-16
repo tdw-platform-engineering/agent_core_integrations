@@ -16,6 +16,9 @@ from .modules.config import (
     ENABLE_MEMORY,
     ENABLE_KNOWLEDGE_BASE,
     ENABLE_BROWSER,
+    ENABLE_ATHENA,
+    ATHENA_LAMBDA_NAME,
+    ENABLE_CART,
 )
 
 os.environ["BYPASS_TOOL_CONSENT"] = BYPASS_TOOL_CONSENT
@@ -38,6 +41,8 @@ _features = {
     "memory": ENABLE_MEMORY,
     "knowledge_base": ENABLE_KNOWLEDGE_BASE,
     "browser": ENABLE_BROWSER,
+    "athena": ENABLE_ATHENA,
+    "cart": ENABLE_CART,
 }
 log.info("Active features: %s", {k: v for k, v in _features.items() if v})
 
@@ -65,6 +70,16 @@ def _collect_tools() -> list:
         from .modules.browser_provider import get_browser_tool
 
         tools.append(get_browser_tool())
+
+    if ENABLE_ATHENA:
+        from .modules.athena_provider import get_athena_tool
+
+        tools.append(get_athena_tool(ATHENA_LAMBDA_NAME))
+
+    if ENABLE_CART:
+        from .modules.cart_provider import get_cart_tools
+
+        tools.extend(get_cart_tools())
 
     return tools
 
@@ -122,7 +137,9 @@ async def invoke(payload: dict, context):
         agent_kwargs["session_manager"] = session_manager
 
     agent = Agent(**agent_kwargs)
-    result = agent(user_input)
+    # Inject session context so the agent can use it for cart operations
+    agent_input = f"[session_id={session_id}]\n{user_input}" if ENABLE_CART else user_input
+    result = agent(agent_input)
     txt, end = parse_agent_output(str(result))
 
     response = format_response(

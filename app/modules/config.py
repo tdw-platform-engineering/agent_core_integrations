@@ -33,6 +33,19 @@ MEMORY_ACTOR_ID = os.getenv("MEMORY_ACTOR_ID", "default-actor")
 
 # ── Knowledge Base ──────────────────────────────────────────────────
 KNOWLEDGE_BASE_ID = os.getenv("KNOWLEDGE_BASE_ID", "")
+KNOWLEDGE_BASE_REGION = os.getenv("KNOWLEDGE_BASE_REGION", os.getenv("AWS_REGION", "us-east-1"))
 
 # ── Browser ─────────────────────────────────────────────────────────
 BROWSER_START_URL = os.getenv("BROWSER_START_URL", "https://www.google.com")
+
+# ── Thinking ────────────────────────────────────────────────────────
+ENABLE_THINKING = os.getenv("ENABLE_THINKING", "false").lower() == "true"
+THINKING_BUDGET = int(os.getenv("THINKING_BUDGET", "4096"))
+
+# ── Athena ──────────────────────────────────────────────────────────
+ENABLE_ATHENA = os.getenv("ENABLE_ATHENA", "false").lower() == "true"
+ATHENA_LAMBDA_NAME = os.getenv("ATHENA_LAMBDA_NAME", "")
+ATHENA_LAMBDA_REGION = os.getenv("ATHENA_LAMBDA_REGION", os.getenv("AWS_REGION", "us-east-1"))
+
+# ── Cart ────────────────────────────────────────────────────────────
+ENABLE_CART = os.getenv("ENABLE_CART", "false").lower() == "true"
