@@ -95,11 +95,12 @@ def add_to_list(
     Returns:
         JSON with the updated item and running total.
     """
+    print(f"[CART DEBUG] add_to_list CALLED: session={session_id} code={cveproduct} price={unit_price}")
     log.info("add_to_list CALLED: session=%s code=%s name=%s price=%s qty=%s",
              session_id, cveproduct, product_name, unit_price, quantity)
     try:
         table = _get_table()
-        log.info("add_to_list: got table OK")
+        print(f"[CART DEBUG] got table OK: {TABLE_NAME}")
         resp = table.update_item(
             Key={"session_id": session_id, "cveproduct": cveproduct},
             UpdateExpression=(
@@ -143,6 +144,7 @@ def add_to_list(
             "item_count": len(all_items),
         }, ensure_ascii=False, default=_decimal_default)
     except Exception as exc:
+        print(f"[CART DEBUG] add_to_list FAILED: {type(exc).__name__}: {exc}")
         log.error("add_to_list failed: %s", exc, exc_info=True)
         return json.dumps({"success": False, "error": str(exc)})
 

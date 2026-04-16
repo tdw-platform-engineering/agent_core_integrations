@@ -29,9 +29,18 @@ def close_browser():
     global _browser_instance
     if _browser_instance is not None:
         try:
-            _browser_instance.close()
-            log.info("Browser session closed")
+            # Try all possible cleanup methods
+            for method in ("close", "stop", "cleanup", "shutdown", "disconnect"):
+                fn = getattr(_browser_instance, method, None)
+                if callable(fn):
+                    print(f"[BROWSER] Calling {method}()")
+                    fn()
+                    print(f"[BROWSER] {method}() OK")
+                    break
+            else:
+                print(f"[BROWSER] No cleanup method found on {type(_browser_instance)}")
+                print(f"[BROWSER] Available: {[m for m in dir(_browser_instance) if not m.startswith('_')]}")
         except Exception as exc:
-            log.warning("Error closing browser: %s", exc)
+            print(f"[BROWSER] Error closing: {exc}")
         finally:
             _browser_instance = None
