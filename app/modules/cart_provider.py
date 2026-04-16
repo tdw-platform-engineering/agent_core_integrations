@@ -27,6 +27,7 @@ def _get_table():
     global _ddb
     if _ddb is None:
         region = os.getenv("CART_REGION", AWS_REGION)
+        log.info("Connecting to DynamoDB table=%s region=%s", TABLE_NAME, region)
         resource = boto3.resource("dynamodb", region_name=region)
         _ddb = resource.Table(TABLE_NAME)
         _ensure_table(resource)
@@ -36,6 +37,7 @@ def _get_table():
 def _ensure_table(resource):
     try:
         _ddb.load()
+        log.info("DynamoDB table %s exists, status=%s", TABLE_NAME, _ddb.table_status)
     except resource.meta.client.exceptions.ResourceNotFoundException:
         log.info("Creating DynamoDB table %s", TABLE_NAME)
         resource.create_table(
@@ -93,8 +95,11 @@ def add_to_list(
     Returns:
         JSON with the updated item and running total.
     """
-    table = _get_table()
+    log.info("add_to_list CALLED: session=%s code=%s name=%s price=%s qty=%s",
+             session_id, cveproduct, product_name, unit_price, quantity)
     try:
+        table = _get_table()
+        log.info("add_to_list: got table OK")
         resp = table.update_item(
             Key={"session_id": session_id, "cveproduct": cveproduct},
             UpdateExpression=(
@@ -120,6 +125,9 @@ def add_to_list(
             KeyConditionExpression=boto3.dynamodb.conditions.Key("session_id").eq(session_id)
         ).get("Items", [])
         grand_total = sum(float(i["unit_price"]) * int(i["quantity"]) for i in all_items)
+
+        log.info("add_to_list OK: code=%s qty=%s total=%.2f items=%d",
+                 cveproduct, item["quantity"], grand_total, len(all_items))
 
         return json.dumps({
             "success": True,
@@ -152,12 +160,15 @@ def get_list(session_id: str) -> str:
     Returns:
         JSON with all items (code, name, qty, price, line total), count, and grand total.
     """
-    table = _get_table()
+    log.info("get_list CALLED: session=%s", session_id)
     try:
+        table = _get_table()
+        log.info("get_list: got table OK")
         resp = table.query(
             KeyConditionExpression=boto3.dynamodb.conditions.Key("session_id").eq(session_id)
         )
         items = resp.get("Items", [])
+        log.info("get_list: found %d items for session=%s", len(items), session_id)
 
         list_items = []
         grand_total = 0.0
@@ -200,6 +211,7 @@ def remove_from_list(session_id: str, cveproduct: str) -> str:
     """
     table = _get_table()
     try:
+        log.info("remove_from_list: session=%s code=%s", session_id, cveproduct)
         table.delete_item(Key={"session_id": session_id, "cveproduct": cveproduct})
 
         # Get updated total
@@ -232,6 +244,7 @@ def clear_list(session_id: str) -> str:
     """
     table = _get_table()
     try:
+        log.info("clear_list: session=%s", session_id)
         resp = table.query(
             KeyConditionExpression=boto3.dynamodb.conditions.Key("session_id").eq(session_id),
             ProjectionExpression="session_id, cveproduct",
