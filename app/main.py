@@ -139,7 +139,15 @@ async def invoke(payload: dict, context):
     agent = Agent(**agent_kwargs)
     # Inject session context so the agent can use it for cart operations
     agent_input = f"[session_id={session_id}]\n{user_input}" if ENABLE_CART else user_input
-    result = agent(agent_input)
+
+    try:
+        result = agent(agent_input)
+    finally:
+        # Always close browser session if it was used
+        if ENABLE_BROWSER:
+            from .modules.browser_provider import close_browser
+            close_browser()
+
     txt, end = parse_agent_output(str(result))
 
     response = format_response(
