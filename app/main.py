@@ -12,6 +12,7 @@ from .modules.config import (
     BYPASS_TOOL_CONSENT,
     ENABLE_MCP,
     ENABLE_MULTI_AGENT,
+    ENABLE_EXPRESS_AGENT,
     ENABLE_WEB_SEARCH,
     ENABLE_MEMORY,
     ENABLE_KNOWLEDGE_BASE,
@@ -37,6 +38,7 @@ log = app.logger
 _features = {
     "mcp": ENABLE_MCP,
     "multi_agent": ENABLE_MULTI_AGENT,
+    "express_agent": ENABLE_EXPRESS_AGENT,
     "web_search": ENABLE_WEB_SEARCH,
     "memory": ENABLE_MEMORY,
     "knowledge_base": ENABLE_KNOWLEDGE_BASE,
@@ -111,11 +113,32 @@ async def invoke(payload: dict, context):
 
     tools = _collect_tools()
 
+    # ── Express agent path (minimal tokens) ─────────────────────────
+    if ENABLE_EXPRESS_AGENT:
+        from .modules.express_agent import run_express_agent
+
+        report = run_express_agent(
+            user_input,
+            session_id=session_id,
+            extra_tools=tools or None,
+        )
+        response = format_response(
+            session_id=session_id,
+            text=report,
+            end=True,
+        )
+        log.info(f"Session: {session_id} | express-agent done")
+        return response
+
     # ── Multi-agent path ────────────────────────────────────────────
     if ENABLE_MULTI_AGENT:
         from .modules.multi_agent import run_multi_agent
 
-        report = run_multi_agent(user_input, extra_tools=tools or None)
+        report = run_multi_agent(
+            user_input,
+            extra_tools=tools or None,
+            session_id=session_id,
+        )
         response = format_response(
             session_id=session_id,
             text=report,

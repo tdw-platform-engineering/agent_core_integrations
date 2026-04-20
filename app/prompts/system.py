@@ -1,4 +1,4 @@
-"""System prompt — loaded from system.md + sql_rules.md."""
+"""System prompt — loaded from system.md + sql_rules.md (legacy single-agent mode)."""
 
 from . import load_prompt
 

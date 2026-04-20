@@ -13,9 +13,17 @@ RESEARCHER_MODEL_ID = os.getenv("RESEARCHER_MODEL_ID", "")
 ANALYST_MODEL_ID = os.getenv("ANALYST_MODEL_ID", "")
 WRITER_MODEL_ID = os.getenv("WRITER_MODEL_ID", "")
 
+# ── Specialized agent models (fall back to MODEL_ID if not set) ─────
+ROUTER_MODEL_ID = os.getenv("ROUTER_MODEL_ID", "")
+CATALOGO_MODEL_ID = os.getenv("CATALOGO_MODEL_ID", "")
+COMPLEMENTARIOS_MODEL_ID = os.getenv("COMPLEMENTARIOS_MODEL_ID", "")
+COTIZACION_MODEL_ID = os.getenv("COTIZACION_MODEL_ID", "")
+GENERAL_MODEL_ID = os.getenv("GENERAL_MODEL_ID", "")
+
 # ── Feature flags (set to "true" to enable) ──────────────────────────
 ENABLE_MCP = os.getenv("ENABLE_MCP", "false").lower() == "true"
 ENABLE_MULTI_AGENT = os.getenv("ENABLE_MULTI_AGENT", "false").lower() == "true"
+ENABLE_EXPRESS_AGENT = os.getenv("ENABLE_EXPRESS_AGENT", "false").lower() == "true"
 ENABLE_WEB_SEARCH = os.getenv("ENABLE_WEB_SEARCH", "false").lower() == "true"
 ENABLE_MEMORY = os.getenv("ENABLE_MEMORY", "false").lower() == "true"
 ENABLE_KNOWLEDGE_BASE = os.getenv("ENABLE_KNOWLEDGE_BASE", "false").lower() == "true"
