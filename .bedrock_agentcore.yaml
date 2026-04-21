@@ -1,7 +1,7 @@
-default_agent: agentcore_bou
+default_agent: agentcore_connect_comersal
 agents:
-  agentcore_bou:
-    name: agentcore_bou
+  agentcore_connect_comersal:
+    name: agentcore_connect_comersal
     language: python
     node_version: '20'
     entrypoint: src/main.py
@@ -9,16 +9,16 @@ agents:
     runtime_type: null
     platform: linux/arm64
     container_runtime: docker
-    source_path: D:\Github\agent_core_integrations
+    source_path: C:\Users\HP JGARCIA TDW\Documents\GitHub\agent_core_integrations
     aws:
-      execution_role: arn:aws:iam::487615743989:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81
-      execution_role_auto_create: false
-      account: '487615743989'
+      execution_role: null
+      execution_role_auto_create: true
+      account: '676206930375'
       region: us-east-1
-      ecr_repository: 487615743989.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-agentcore_bou
-      ecr_auto_create: false
+      ecr_repository: null
+      ecr_auto_create: true
       s3_path: null
-      s3_auto_create: true
+      s3_auto_create: false
       network_configuration:
         network_mode: PUBLIC
         network_mode_config: null
@@ -30,21 +30,21 @@ agents:
         idle_runtime_session_timeout: null
         max_lifetime: null
     bedrock_agentcore:
-      agent_id: agentcore_bou-sOsYRL3xXE
-      agent_arn: arn:aws:bedrock-agentcore:us-east-1:487615743989:runtime/agentcore_bou-sOsYRL3xXE
+      agent_id: null
+      agent_arn: null
       agent_session_id: null
     codebuild:
-      project_name: bedrock-agentcore-agentcore_bou-builder
-      execution_role: arn:aws:iam::487615743989:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-c2ab6e2f81
-      source_bucket: bedrock-agentcore-codebuild-sources-487615743989-us-east-1
+      project_name: null
+      execution_role: null
+      source_bucket: null
     memory:
       mode: STM_ONLY
-      memory_id: agentcore_bou_mem-Nlt3UJ63C4
-      memory_arn: arn:aws:bedrock-agentcore:us-east-1:487615743989:memory/agentcore_bou_mem-Nlt3UJ63C4
-      memory_name: agentcore_bou_mem
+      memory_id: null
+      memory_arn: null
+      memory_name: agentcore_connect_comersal_memory
       event_expiry_days: 7
-      first_invoke_memory_check_done: true
-      was_created_by_toolkit: true
+      first_invoke_memory_check_done: false
+      was_created_by_toolkit: false
     identity:
       credential_providers: []
       workload: null
