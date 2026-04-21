@@ -58,31 +58,27 @@ lift_ponderado, confiabilidad_lift, confianza_1_a_2
 
 ## Plantilla SQL Base
 ```sql
-SELECT "Codigo", "Producto", "Precio", "Stock", departamento, linea
-FROM (
-    SELECT pr.cveproduct   AS "Codigo",
-           pr.nombre       AS "Producto",
-           pr.precio_venta AS "Precio",
-           pr.inventario   AS "Stock",
-           pr.departamento,
-           pr.linea,
-           ROW_NUMBER() OVER (
-               PARTITION BY pr.cveproduct
-               ORDER BY pr.margen DESC, pr.precio_venta DESC
-           ) AS rn
-    FROM almacenes_bou_prod.estadisticos_reales pr
-    INNER JOIN almacenes_bou_prod.categorized_results cr
-            ON cr.record_id = TRIM(pr.cveproduct)
-    WHERE pr.inventario > 0
-      AND pr.precio_venta > 0
-      AND pr.estatus_compra = 'OK'
-      AND pr.margen > 0
-      AND cr.category = 'PRODUCTO'
-) sub
-WHERE rn = 1
-ORDER BY 2 ASC
+SELECT pr.cveproduct       AS "Codigo",
+       pr.nombre           AS "Producto",
+       MAX(pr.precio_venta) AS "Precio",
+       SUM(pr.inventario)   AS "Stock_Total",
+       pr.departamento,
+       pr.linea
+FROM almacenes_bou_prod.estadisticos_reales pr
+INNER JOIN almacenes_bou_prod.categorized_results cr
+        ON cr.record_id = TRIM(pr.cveproduct)
+WHERE pr.inventario > 0
+  AND pr.precio_venta > 0
+  AND pr.estatus_compra = 'OK'
+  AND pr.margen > 0
+  AND cr.category = 'PRODUCTO'
+  -- + filtros de búsqueda (nombre, departamento, etc.)
+GROUP BY pr.cveproduct, pr.nombre, pr.departamento, pr.linea
+ORDER BY pr.nombre ASC
 LIMIT 20;
 ```
+
+> **IMPORTANTE**: `Stock_Total` es la SUMA de inventario de TODAS las sucursales. `Precio` es el MAX de todas las tiendas. Un solo registro por código de producto.
 
 ## Plantilla SQL Complementarios (MBA)
 
@@ -134,14 +130,36 @@ Después de obtener complementarios, buscar cada uno en `estadisticos_reales` pa
 
 ## Presentación de Resultados
 
+**Formato por producto (búsqueda normal):**
 ```
 📦 Código: [cveproduct]
 🏷️ Nombre: [nombre]
 💲 Precio: $[precio_venta]
-📊 Stock:  [inventario] unidades
+📊 Stock total: [Stock_Total] unidades (todas las sucursales)
 🗂️ Depto / Línea: [departamento] / [linea]
-🏪 Tienda: [tienda]  ← solo si hay múltiples sucursales
 ```
+
+**Formato de presupuesto (cuando el cliente pide armar un presupuesto):**
+```
+📋 PRESUPUESTO — [descripción del proyecto]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| # | Código | Producto | Cant. | Precio Unit. | Subtotal |
+|---|--------|----------|-------|-------------|----------|
+| 1 | XXX    | Nombre   | 2     | $100.00     | $200.00  |
+| 2 | YYY    | Nombre   | 5     | $50.00      | $250.00  |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 TOTAL: $450.00
+📊 Presupuesto disponible: $[monto] | Usado: $[total] | Restante: $[diferencia]
+```
+
+**Reglas de presupuesto:**
+- Siempre mostrar tabla con columnas: #, Código, Producto, Cantidad, Precio Unitario, Subtotal
+- Mostrar el total acumulado y cuánto queda del presupuesto
+- Si se excede el presupuesto, avisar y sugerir alternativas más económicas
+- Usar `add_to_list` para cada producto del presupuesto
+- Al final, usar `get_list` para confirmar el resumen completo
 
 ## Prohibiciones
 
