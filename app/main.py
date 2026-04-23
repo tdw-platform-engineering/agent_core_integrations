@@ -57,9 +57,9 @@ def _collect_tools() -> list:
         tools.extend(get_web_tools())
 
     if ENABLE_KNOWLEDGE_BASE:
-        from .modules.knowledge_base_provider import get_retrieve_tool
+        from .modules.knowledge_base_provider import get_retrieve_tools
 
-        tools.append(get_retrieve_tool())
+        tools.extend(get_retrieve_tools())
 
     if ENABLE_MCP:
         from .modules.mcp_provider import build_mcp_client
