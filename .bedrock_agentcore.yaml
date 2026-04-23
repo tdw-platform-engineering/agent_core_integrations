@@ -11,12 +11,12 @@ agents:
     container_runtime: docker
     source_path: D:\Github\agent_core_integrations
     aws:
-      execution_role: null
-      execution_role_auto_create: true
-      account: '487615743989'
+      execution_role: arn:aws:iam::471112810669:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-e45571cd7c
+      execution_role_auto_create: false
+      account: '471112810669'
       region: us-east-1
-      ecr_repository: null
-      ecr_auto_create: true
+      ecr_repository: 471112810669.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-agentcore_sigma_q
+      ecr_auto_create: false
       s3_path: null
       s3_auto_create: true
       network_configuration:
@@ -30,17 +30,17 @@ agents:
         idle_runtime_session_timeout: null
         max_lifetime: null
     bedrock_agentcore:
-      agent_id: null
-      agent_arn: null
+      agent_id: agentcore_sigma_q-NR7E2SBiPC
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:471112810669:runtime/agentcore_sigma_q-NR7E2SBiPC
       agent_session_id: null
     codebuild:
-      project_name: null
-      execution_role: null
-      source_bucket: null
+      project_name: bedrock-agentcore-agentcore_sigma_q-builder
+      execution_role: arn:aws:iam::471112810669:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-e45571cd7c
+      source_bucket: bedrock-agentcore-codebuild-sources-471112810669-us-east-1
     memory:
       mode: STM_ONLY
-      memory_id: null
-      memory_arn: null
+      memory_id: agentcore_sigma_q_mem-8MCsnL7K5W
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:471112810669:memory/agentcore_sigma_q_mem-8MCsnL7K5W
       memory_name: agentcore_sigma_q_mem
       event_expiry_days: 7
       first_invoke_memory_check_done: true
