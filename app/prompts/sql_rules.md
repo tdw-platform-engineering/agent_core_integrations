@@ -47,9 +47,26 @@ ORDER BY de.id;
 
 ## Reglas SQL
 
-1. Buscar metadata primero para identificar el `id_metadata` correcto
-2. Luego extraer el detalle completo con JOIN
-3. NUNCA resumir los resultados — mostrar todas las filas
-4. `piece_cost` es costo unitario para 1,000 unidades por defecto
-5. Usar ILIKE para búsquedas case-insensitive
-6. Buscar por palabras clave en `hoja` e `item` con OR
+1. **Flujo de búsqueda en 2 pasos:**
+   - Paso 1: Buscar en metadata para identificar el `id_metadata` correcto
+   - Paso 2: Extraer detalle completo con JOIN usando ese `id_metadata`
+2. NUNCA resumir los resultados — mostrar TODAS las filas
+3. `piece_cost` es costo unitario para 1,000 unidades por defecto
+4. Usar ILIKE para búsquedas case-insensitive
+5. Buscar por palabras clave en `hoja` e `item` con OR
+6. Si la búsqueda por nombre exacto no da resultados, probar con palabras parciales
+7. Siempre ordenar detalles por `de.id` para mantener el orden original de la hoja de ruta
+
+### Ejemplo de flujo completo:
+```sql
+-- Paso 1: Identificar estructura
+SELECT id_metadata, archivo, hoja, item, size
+FROM public.metadata_estructuras
+WHERE hoja ILIKE '%obsidiana%' OR item ILIKE '%obsidiana%';
+
+-- Paso 2: Extraer hoja de ruta completa (usar id_metadata del paso 1)
+SELECT de.material, de.standard, de.mat_cost, de.piece_cost
+FROM public.detalles_estructuras de
+WHERE de.id_metadata = '[ID_DEL_PASO_1]'
+ORDER BY de.id;
+```

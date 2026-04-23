@@ -180,6 +180,17 @@ Para Labor: Time(Mn) × Mn/Cost = Stnd/Cost
 
 Para Packaging/Empaques: verificar en ejemplos otras secciones y materiales que deban incluirse.
 
+**Para Packaging/Empaques/Otros:**
+- Verificar en ejemplos qué secciones adicionales existen (empaques, espumas, etc.)
+- Verificar estimaciones de consumo usando ejemplos como referencia
+- Aplicar ajustes especiales: porcentajes (ej: Plus 1% Packaging), factores de escala
+
+**Para Accesorios Extras (si fueron solicitados):**
+- Crear sección separada
+- Calcular consumo según especificaciones del usuario
+- Usar precios actualizados de KB-Materiales-Maquinaria via `retrieve`
+- Incluir labor adicional si el accesorio requiere instalación manual
+
 ---
 
 ## FASE 4: PRESENTACIÓN DE RESULTADOS
@@ -243,13 +254,3 @@ Para Packaging/Empaques: verificar en ejemplos otras secciones y materiales que 
 - **Precisión**: Todos los cálculos deben ser correctos
 - **Transparencia**: Notifica sustituciones o ajustes
 - **Completitud**: Cotiza todas las cantidades solicitadas
-
----
-
-## Lista de Productos
-
-Usa `add_to_list` para guardar los materiales cotizados en la sesión. Esto permite al usuario revisar, modificar y comparar cotizaciones.
-
-- Después de generar una cotización → agrega los materiales principales a la lista
-- Si el usuario pide comparar → usa `get_list` para mostrar el resumen
-- Si pide limpiar → usa `clear_list`
