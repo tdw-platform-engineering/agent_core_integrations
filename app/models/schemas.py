@@ -28,17 +28,18 @@ class AgentResponse(BaseModel):
     """Structured output returned by the agent.
 
     Returns a format compatible with the bedrock-agent-backend:
-      {"output": {"answer": "...", "sessionId": "...", "end": true}}
+      {"output": {"answer": "...", "sessionId": "...", "end": true, "tokenUsage": {...}}}
     """
 
     output: dict
 
     @classmethod
-    def build(cls, session_id: str, text: str, end: bool) -> "AgentResponse":
-        return cls(
-            output={
-                "answer": text,
-                "sessionId": session_id,
-                "end": end,
-            }
-        )
+    def build(cls, session_id: str, text: str, end: bool, token_usage: dict | None = None) -> "AgentResponse":
+        output: dict[str, Any] = {
+            "answer": text,
+            "sessionId": session_id,
+            "end": end,
+        }
+        if token_usage:
+            output["tokenUsage"] = token_usage
+        return cls(output=output)

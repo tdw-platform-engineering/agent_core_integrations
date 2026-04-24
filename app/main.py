@@ -102,6 +102,47 @@ def parse_agent_output(raw: str) -> tuple[str, bool]:
         return raw, True
 
 
+def _extract_token_usage(result) -> dict | None:
+    """Extract token usage metrics from a Strands AgentResult.
+
+    The metrics dict contains per-cycle usage data. We aggregate across
+    all cycles to get the total tokens consumed for the full invocation.
+    """
+    try:
+        metrics = getattr(result, "metrics", None)
+        if not metrics:
+            return None
+
+        # metrics is a dict with accumulated usage info
+        # Try direct access first (newer SDK versions)
+        usage = metrics.get("usage", None) if isinstance(metrics, dict) else None
+        if usage:
+            return {
+                "inputTokens": usage.get("inputTokens", 0),
+                "outputTokens": usage.get("outputTokens", 0),
+                "totalTokens": usage.get("totalTokens", 0),
+                "cacheReadInputTokens": usage.get("cacheReadInputTokens", 0),
+                "cacheWriteInputTokens": usage.get("cacheWriteInputTokens", 0),
+            }
+
+        # Fallback: aggregate from per-cycle metrics
+        accumulated = metrics.get("accumulated", metrics)
+        if isinstance(accumulated, dict) and "usage" in accumulated:
+            u = accumulated["usage"]
+            return {
+                "inputTokens": u.get("inputTokens", 0),
+                "outputTokens": u.get("outputTokens", 0),
+                "totalTokens": u.get("totalTokens", 0),
+                "cacheReadInputTokens": u.get("cacheReadInputTokens", 0),
+                "cacheWriteInputTokens": u.get("cacheWriteInputTokens", 0),
+            }
+
+        return None
+    except Exception as e:
+        log.warning("Failed to extract token usage: %s", e)
+        return None
+
+
 @app.entrypoint
 async def invoke(payload: dict, context):
     request = validate_request(payload)
@@ -115,11 +156,20 @@ async def invoke(payload: dict, context):
     if ENABLE_MULTI_AGENT:
         from .modules.multi_agent import run_multi_agent
 
-        report = run_multi_agent(user_input, extra_tools=tools or None)
+        report, token_usage = run_multi_agent(user_input, extra_tools=tools or None)
+        if token_usage:
+            log.info(
+                "Session: %s | Tokens — input: %d, output: %d, total: %d",
+                session_id,
+                token_usage.get("inputTokens", 0),
+                token_usage.get("outputTokens", 0),
+                token_usage.get("totalTokens", 0),
+            )
         response = format_response(
             session_id=session_id,
             text=report,
             end=True,
+            token_usage=token_usage,
         )
         log.info(f"Session: {session_id} | multi-agent done")
         return response
@@ -148,12 +198,24 @@ async def invoke(payload: dict, context):
             from .modules.browser_provider import close_browser
             close_browser()
 
+    # ── Extract token usage metrics ─────────────────────────────────
+    token_usage = _extract_token_usage(result)
+    if token_usage:
+        log.info(
+            "Session: %s | Tokens — input: %d, output: %d, total: %d",
+            session_id,
+            token_usage.get("inputTokens", 0),
+            token_usage.get("outputTokens", 0),
+            token_usage.get("totalTokens", 0),
+        )
+
     txt, end = parse_agent_output(str(result))
 
     response = format_response(
         session_id=session_id,
         text=txt,
         end=end,
+        token_usage=token_usage,
     )
     log.info(f"Session: {session_id} | end={end}")
     return response
