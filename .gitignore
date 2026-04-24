@@ -241,3 +241,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .env.example
+.env.bou
+.env.sigmaq
