@@ -30,7 +30,14 @@ from bedrock_agentcore import BedrockAgentCoreApp
 
 from .models.bedrock import load_model
 from .modules.hooks import validate_request, format_response
-from .prompts.system import SYSTEM_PROMPT
+from .prompts import build_system_prompt
+
+SYSTEM_PROMPT = build_system_prompt(
+    enable_knowledge_base=ENABLE_KNOWLEDGE_BASE,
+    enable_athena=ENABLE_ATHENA,
+    enable_cart=ENABLE_CART,
+    enable_browser=ENABLE_BROWSER,
+)
 
 app = BedrockAgentCoreApp()
 log = app.logger
@@ -47,6 +54,7 @@ _features = {
     "cart": ENABLE_CART,
 }
 log.info("Active features: %s", {k: v for k, v in _features.items() if v})
+log.info("System prompt assembled: %d chars (~%d tokens)", len(SYSTEM_PROMPT), len(SYSTEM_PROMPT) // 4)
 
 
 def _collect_tools() -> list:
