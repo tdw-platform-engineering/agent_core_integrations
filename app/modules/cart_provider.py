@@ -78,22 +78,16 @@ def add_to_list(
     department: str = "",
     line: str = "",
 ) -> str:
-    """Add a product to the session's product list or increase its quantity.
-
-    Use this after showing search results when the customer wants to keep
-    track of products, build a quote, or plan a budget.
+    """Add a product to the session's list. Increases quantity if already exists.
 
     Args:
-        session_id: Current chat session ID.
-        cveproduct: Product code from the database.
+        session_id: Chat session ID.
+        cveproduct: Product code.
         product_name: Product name.
-        unit_price: Unit price in USD.
-        quantity: Quantity to add (default 1). Adds to existing quantity if product already in list.
-        department: Product department (optional).
+        unit_price: Unit price.
+        quantity: Quantity to add (default 1).
+        department: Department (optional).
         line: Product line (optional).
-
-    Returns:
-        JSON with the updated item and running total.
     """
     print(f"[CART DEBUG] add_to_list CALLED: session={session_id} code={cveproduct} price={unit_price}")
     log.info("add_to_list CALLED: session=%s code=%s name=%s price=%s qty=%s",
@@ -151,16 +145,10 @@ def add_to_list(
 
 @tool
 def get_list(session_id: str) -> str:
-    """Get all products in the session's product list with totals.
-
-    Use this to recall what products the customer has selected so far,
-    to build quotes, check budget usage, or summarize the session.
+    """Get all products in the session's list with totals.
 
     Args:
-        session_id: Current chat session ID.
-
-    Returns:
-        JSON with all items (code, name, qty, price, line total), count, and grand total.
+        session_id: Chat session ID.
     """
     log.info("get_list CALLED: session=%s", session_id)
     try:
@@ -202,14 +190,11 @@ def get_list(session_id: str) -> str:
 
 @tool
 def remove_from_list(session_id: str, cveproduct: str) -> str:
-    """Remove a product from the session's product list.
+    """Remove a product from the session's list.
 
     Args:
-        session_id: Current chat session ID.
+        session_id: Chat session ID.
         cveproduct: Product code to remove.
-
-    Returns:
-        JSON confirming removal and updated total.
     """
     table = _get_table()
     try:
@@ -236,13 +221,10 @@ def remove_from_list(session_id: str, cveproduct: str) -> str:
 
 @tool
 def clear_list(session_id: str) -> str:
-    """Clear all products from the session's product list.
+    """Clear all products from the session's list.
 
     Args:
-        session_id: Current chat session ID.
-
-    Returns:
-        JSON confirming the list was cleared.
+        session_id: Chat session ID.
     """
     table = _get_table()
     try:

@@ -38,17 +38,10 @@ def get_athena_tool(function_name: str):
 
 @tool
 def execute_sql_query(query: str) -> str:
-    """Execute a read-only SQL query against the product database (Athena).
-
-    Use this tool to search for products, check inventory, prices, stock,
-    and query the MBA (Market Basket Analysis) table for complementary products.
+    """Run a read-only SQL SELECT on the product database (Athena). Use for prices, stock, and MBA complementary products.
 
     Args:
-        query: SQL SELECT query to execute. Only read operations are allowed.
-               Must start with SELECT, WITH, EXPLAIN, SHOW, or DESCRIBE.
-
-    Returns:
-        JSON string with query results including data rows and metadata.
+        query: SQL SELECT query. Only read operations allowed.
     """
     client = _get_client()
 
