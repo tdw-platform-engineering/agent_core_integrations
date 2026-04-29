@@ -47,5 +47,8 @@ ENABLE_ATHENA = os.getenv("ENABLE_ATHENA", "false").lower() == "true"
 ATHENA_LAMBDA_NAME = os.getenv("ATHENA_LAMBDA_NAME", "")
 ATHENA_LAMBDA_REGION = os.getenv("ATHENA_LAMBDA_REGION", os.getenv("AWS_REGION", "us-east-1"))
 
-# ── Cart ────────────────────────────────────────────────────────────
+# ── Conversation Manager ────────────────────────────────────────
+CONVERSATION_WINDOW_SIZE = int(os.getenv("CONVERSATION_WINDOW_SIZE", "10"))  # max messages to keep
+
+# ── Cart ────────────────────────────────────────────────────────
 ENABLE_CART = os.getenv("ENABLE_CART", "false").lower() == "true"
