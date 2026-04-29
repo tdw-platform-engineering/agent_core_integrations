@@ -63,13 +63,10 @@ def run_multi_agent(user_input: str, extra_tools: list | None = None) -> tuple[s
 
     def _accumulate(result: Any) -> None:
         metrics = getattr(result, "metrics", None)
-        if not metrics or not isinstance(metrics, dict):
+        if not metrics:
             return
-        usage = metrics.get("usage", None)
-        if not usage:
-            accumulated = metrics.get("accumulated", metrics)
-            usage = accumulated.get("usage", None) if isinstance(accumulated, dict) else None
-        if usage:
+        usage = getattr(metrics, "accumulated_usage", None)
+        if usage and isinstance(usage, dict):
             for key in total_usage:
                 total_usage[key] += usage.get(key, 0)
 

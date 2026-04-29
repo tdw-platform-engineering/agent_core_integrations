@@ -19,11 +19,13 @@ from .modules.config import (
     ENABLE_ATHENA,
     ATHENA_LAMBDA_NAME,
     ENABLE_CART,
+    CONVERSATION_WINDOW_SIZE,
 )
 
 os.environ["BYPASS_TOOL_CONSENT"] = BYPASS_TOOL_CONSENT
 
 from strands import Agent
+from strands.agent.conversation_manager import SlidingWindowConversationManager
 from bedrock_agentcore import BedrockAgentCoreApp
 
 from .models.bedrock import load_model
@@ -105,18 +107,18 @@ def parse_agent_output(raw: str) -> tuple[str, bool]:
 def _extract_token_usage(result) -> dict | None:
     """Extract token usage metrics from a Strands AgentResult.
 
-    The metrics dict contains per-cycle usage data. We aggregate across
-    all cycles to get the total tokens consumed for the full invocation.
+    result.metrics is an EventLoopMetrics dataclass with:
+      - accumulated_usage: Usage TypedDict {inputTokens, outputTokens, totalTokens, ...}
+      - agent_invocations: list of AgentInvocation, each with .usage
     """
     try:
         metrics = getattr(result, "metrics", None)
         if not metrics:
             return None
 
-        # metrics is a dict with accumulated usage info
-        # Try direct access first (newer SDK versions)
-        usage = metrics.get("usage", None) if isinstance(metrics, dict) else None
-        if usage:
+        # EventLoopMetrics.accumulated_usage is a Usage TypedDict
+        usage = getattr(metrics, "accumulated_usage", None)
+        if usage and isinstance(usage, dict) and usage.get("totalTokens", 0) > 0:
             return {
                 "inputTokens": usage.get("inputTokens", 0),
                 "outputTokens": usage.get("outputTokens", 0),
@@ -125,17 +127,19 @@ def _extract_token_usage(result) -> dict | None:
                 "cacheWriteInputTokens": usage.get("cacheWriteInputTokens", 0),
             }
 
-        # Fallback: aggregate from per-cycle metrics
-        accumulated = metrics.get("accumulated", metrics)
-        if isinstance(accumulated, dict) and "usage" in accumulated:
-            u = accumulated["usage"]
-            return {
-                "inputTokens": u.get("inputTokens", 0),
-                "outputTokens": u.get("outputTokens", 0),
-                "totalTokens": u.get("totalTokens", 0),
-                "cacheReadInputTokens": u.get("cacheReadInputTokens", 0),
-                "cacheWriteInputTokens": u.get("cacheWriteInputTokens", 0),
-            }
+        # Fallback: try latest agent invocation
+        invocations = getattr(metrics, "agent_invocations", [])
+        if invocations:
+            last = invocations[-1]
+            u = getattr(last, "usage", None)
+            if u and isinstance(u, dict) and u.get("totalTokens", 0) > 0:
+                return {
+                    "inputTokens": u.get("inputTokens", 0),
+                    "outputTokens": u.get("outputTokens", 0),
+                    "totalTokens": u.get("totalTokens", 0),
+                    "cacheReadInputTokens": u.get("cacheReadInputTokens", 0),
+                    "cacheWriteInputTokens": u.get("cacheWriteInputTokens", 0),
+                }
 
         return None
     except Exception as e:
@@ -178,6 +182,9 @@ async def invoke(payload: dict, context):
     agent_kwargs: dict = {
         "model": load_model(),
         "system_prompt": SYSTEM_PROMPT,
+        "conversation_manager": SlidingWindowConversationManager(
+            window_size=CONVERSATION_WINDOW_SIZE,
+        ),
     }
     if tools:
         agent_kwargs["tools"] = tools
@@ -200,14 +207,21 @@ async def invoke(payload: dict, context):
 
     # ── Extract token usage metrics ─────────────────────────────────
     token_usage = _extract_token_usage(result)
+    cycle_count = getattr(result.metrics, "cycle_count", 0) if hasattr(result, "metrics") else 0
     if token_usage:
         log.info(
-            "Session: %s | Tokens — input: %d, output: %d, total: %d",
+            "Session: %s | Cycles: %d | Tokens — input: %d, output: %d, total: %d",
             session_id,
+            cycle_count,
             token_usage.get("inputTokens", 0),
             token_usage.get("outputTokens", 0),
             token_usage.get("totalTokens", 0),
         )
+    else:
+        # Debug: log what metrics look like so we can fix extraction
+        raw_metrics = getattr(result, "metrics", "NO_METRICS_ATTR")
+        log.warning("Session: %s | No token usage extracted. raw metrics type=%s value=%s",
+                     session_id, type(raw_metrics).__name__, str(raw_metrics)[:500])
 
     txt, end = parse_agent_output(str(result))
 
