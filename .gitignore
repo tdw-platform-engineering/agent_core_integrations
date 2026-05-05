@@ -243,3 +243,4 @@ __marimo__/
 .env.example
 .env.bou
 .env.sigmaq
+.env.panasa
