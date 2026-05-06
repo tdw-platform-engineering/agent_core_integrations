@@ -16,19 +16,16 @@
   },
   "sub_agents": {
     "presupuesto": {
-      "arn": "REPLACE_WITH_AGENTE_PRESUPUESTO_ARN",
+      "arn": "",
       "description": "Agente de presupuestos — consulta fact.presupuesto"
     },
     "ventas_carton": {
-      "arn": "REPLACE_WITH_AGENTE_VENTAS_CARTON_ARN",
+      "arn": "",
       "description": "Agente de ventas de cartón — consulta fact.ventas_carton"
     }
   },
   "memory": {
     "shared": true,
     "memory_name": "agente_orq_presupuesto_mem"
-  },
-  "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
-  "region": "us-east-1",
-  "platform": "linux/arm64"
+  }
 }

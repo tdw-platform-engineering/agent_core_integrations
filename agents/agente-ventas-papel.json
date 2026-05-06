@@ -11,13 +11,11 @@
     "ENABLE_WEB_SEARCH": "false",
     "ENABLE_KNOWLEDGE_BASE": "false",
     "ENABLE_BROWSER": "false",
-    "ENABLE_CART": "false"
+    "ENABLE_CART": "false",
+    "ENABLE_ORCHESTRATOR": "false"
   },
   "memory": {
     "shared": false,
     "memory_name": "agente_ventas_papel_mem"
-  },
-  "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
-  "region": "us-east-1",
-  "platform": "linux/arm64"
+  }
 }

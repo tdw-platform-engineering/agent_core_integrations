@@ -1,0 +1,15 @@
+{
+  "description": "Shared infrastructure config — used by all agents",
+  "aws": {
+    "account": "487615743989",
+    "region": "us-east-1",
+    "execution_role": "arn:aws:iam::487615743989:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81",
+    "codebuild_role": "arn:aws:iam::487615743989:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-c2ab6e2f81",
+    "source_bucket": "bedrock-agentcore-codebuild-sources-487615743989-us-east-1"
+  },
+  "defaults": {
+    "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+    "platform": "linux/arm64",
+    "entrypoint": "src/main.py"
+  }
+}
