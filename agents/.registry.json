@@ -1,0 +1,4 @@
+{
+  "description": "Auto-generated registry of deployed agent ARNs. Updated by deploy.ps1 after each successful deploy.",
+  "agents": {}
+}
