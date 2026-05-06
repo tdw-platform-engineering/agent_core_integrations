@@ -3,8 +3,8 @@
     "aws":  {
                 "account":  "588738567193",
                 "region":  "us-east-1",
-                "execution_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-4559b89511",
-                "codebuild_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-4559b89511",
+                "execution_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-738fe71b64",
+                "codebuild_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-738fe71b64",
                 "source_bucket":  "bedrock-agentcore-codebuild-sources-588738567193-us-east-1",
                 "shared_memory_id":  "agentcore_bou_mem-Nlt3UJ63C4"
             },

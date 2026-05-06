@@ -14,6 +14,16 @@
                                                 "runtime_name":  "agente_ventas_carton",
                                                 "deployed_at":  "2026-05-05T19:34:03Z",
                                                 "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_carton-ww70tyExte"
-                                            }
+                                            },
+                   "agente-orquestador-papel-carton":  {
+                                                           "runtime_name":  "agente_orq_papel_carton",
+                                                           "deployed_at":  "2026-05-05T19:39:56Z",
+                                                           "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_orq_papel_carton-YPmjlMCK7f"
+                                                       },
+                   "agente-orquestador-presupuesto":  {
+                                                          "runtime_name":  "agente_orq_presupuesto",
+                                                          "deployed_at":  "2026-05-05T19:43:46Z",
+                                                          "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_orq_presupuesto-M3nlmv3ewd"
+                                                      }
                }
 }
