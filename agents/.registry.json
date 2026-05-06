@@ -1,29 +1,29 @@
 ﻿{
     "agents":  {
-                   "agente-presupuesto":  {
-                                              "runtime_name":  "agente_presupuesto",
-                                              "deployed_at":  "2026-05-05T19:35:57Z",
-                                              "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_presupuesto-0p1Wv78PLT"
-                                          },
-                   "agente-ventas-papel":  {
-                                               "runtime_name":  "agente_ventas_papel",
-                                               "deployed_at":  "2026-05-05T19:35:01Z",
-                                               "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_papel-oAXGC4295F"
-                                           },
-                   "agente-ventas-carton":  {
-                                                "runtime_name":  "agente_ventas_carton",
-                                                "deployed_at":  "2026-05-05T19:34:03Z",
-                                                "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_carton-ww70tyExte"
-                                            },
                    "agente-orquestador-papel-carton":  {
                                                            "runtime_name":  "agente_orq_papel_carton",
-                                                           "deployed_at":  "2026-05-05T19:39:56Z",
+                                                           "deployed_at":  "2026-05-05T20:44:15Z",
                                                            "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_orq_papel_carton-YPmjlMCK7f"
                                                        },
                    "agente-orquestador-presupuesto":  {
                                                           "runtime_name":  "agente_orq_presupuesto",
                                                           "deployed_at":  "2026-05-05T19:43:46Z",
                                                           "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_orq_presupuesto-M3nlmv3ewd"
-                                                      }
+                                                      },
+                   "agente-presupuesto":  {
+                                              "runtime_name":  "agente_presupuesto",
+                                              "deployed_at":  "2026-05-05T19:35:57Z",
+                                              "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_presupuesto-0p1Wv78PLT"
+                                          },
+                   "agente-ventas-carton":  {
+                                                "runtime_name":  "agente_ventas_carton",
+                                                "deployed_at":  "2026-05-05T19:34:03Z",
+                                                "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_carton-ww70tyExte"
+                                            },
+                   "agente-ventas-papel":  {
+                                               "runtime_name":  "agente_ventas_papel",
+                                               "deployed_at":  "2026-05-05T19:35:01Z",
+                                               "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_papel-oAXGC4295F"
+                                           }
                }
 }

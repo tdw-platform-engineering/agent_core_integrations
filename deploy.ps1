@@ -109,7 +109,15 @@ foreach ($prop in $config.features.PSObject.Properties) {
 }
 
 if ($resolvedSubAgents.Count -gt 0) {
-    $envArgs += "--env"; $envArgs += "SUB_AGENTS=$($resolvedSubAgents | ConvertTo-Json -Compress -Depth 5)"
+    # Build JSON manually to ensure proper quoting
+    $jsonParts = @()
+    foreach ($key in $resolvedSubAgents.Keys) {
+        $arn = $resolvedSubAgents[$key].arn
+        $desc = $resolvedSubAgents[$key].description
+        $jsonParts += """$key"":{""arn"":""$arn"",""description"":""$desc""}"
+    }
+    $subAgentsJson = "{" + ($jsonParts -join ",") + "}"
+    $envArgs += "--env"; $envArgs += "SUB_AGENTS=$subAgentsJson"
 }
 
 # Load shared vars from .env (credentials, memory, athena)
@@ -245,7 +253,7 @@ uv run agentcore configure @configureArgs
 # ======================================================================
 Write-Host "[STEP 3] Deploying..." -ForegroundColor Green
 
-$deployArgs = @()
+$deployArgs = @("--auto-update-on-conflict")
 if ($LocalBuild) { $deployArgs += "--local-build" }
 
 uv run agentcore deploy @envArgs @deployArgs

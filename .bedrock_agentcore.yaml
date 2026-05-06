@@ -30,13 +30,13 @@ agents:
         idle_runtime_session_timeout: null
         max_lifetime: null
     bedrock_agentcore:
-      agent_id: agente_orq_presupuesto-M3nlmv3ewd
-      agent_arn: arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_orq_presupuesto-M3nlmv3ewd
+      agent_id: null
+      agent_arn: null
       agent_session_id: null
     codebuild:
-      project_name: bedrock-agentcore-agente_orq_presupuesto-builder
-      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-738fe71b64
-      source_bucket: bedrock-agentcore-codebuild-sources-588738567193-us-east-1
+      project_name: null
+      execution_role: null
+      source_bucket: null
     memory:
       mode: STM_ONLY
       memory_id: agente_orq_presupuesto_mem-pEINZK7RdF
@@ -44,7 +44,7 @@ agents:
       memory_name: agente_orq_presupuesto_mem
       event_expiry_days: 30
       first_invoke_memory_check_done: true
-      was_created_by_toolkit: true
+      was_created_by_toolkit: false
     identity:
       credential_providers: []
       workload: null
