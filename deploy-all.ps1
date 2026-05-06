@@ -25,8 +25,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# ── Deploy order: base agents first, orchestrators last ──────────────
-# Orchestrators depend on base agents being deployed (for ARN resolution)
+# Deploy order: base agents first, orchestrators last
 $baseAgents = @(
     "agente-ventas-carton",
     "agente-ventas-papel",
@@ -41,64 +40,74 @@ $orchestrators = @(
 $allAgents = $baseAgents + $orchestrators
 
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  Multi-Agent Deploy — $($allAgents.Count) agents" -ForegroundColor Cyan
-Write-Host "  Order: Base agents ($($baseAgents.Count)) → Orchestrators ($($orchestrators.Count))" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "  Multi-Agent Deploy - $($allAgents.Count) agents" -ForegroundColor Cyan
+Write-Host "  Order: Base agents ($($baseAgents.Count)) then Orchestrators ($($orchestrators.Count))" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
 $results = @()
 $step = 0
 
-# ── Phase 1: Base agents ─────────────────────────────────────────────
-Write-Host "━━━ Phase 1: Base Agents ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor White
+# -- Phase 1: Base agents ---------------------------------------------
+Write-Host "--- Phase 1: Base Agents ---" -ForegroundColor White
 Write-Host ""
 
 foreach ($agentName in $baseAgents) {
     $step++
     Write-Host "  [$step/$($allAgents.Count)] $agentName" -ForegroundColor White
 
-    $deployArgs = @("-AgentName", $agentName)
-    if ($LocalBuild) { $deployArgs += "-LocalBuild" }
-    if ($DryRun) { $deployArgs += "-DryRun" }
-
     try {
-        & (Join-Path $PSScriptRoot "deploy.ps1") @deployArgs
-        $results += @{ Name = $agentName; Status = "✅ OK"; Phase = "base" }
+        $scriptPath = Join-Path $PSScriptRoot "deploy.ps1"
+        if ($LocalBuild -and $DryRun) {
+            & $scriptPath -AgentName $agentName -LocalBuild -DryRun
+        } elseif ($LocalBuild) {
+            & $scriptPath -AgentName $agentName -LocalBuild
+        } elseif ($DryRun) {
+            & $scriptPath -AgentName $agentName -DryRun
+        } else {
+            & $scriptPath -AgentName $agentName
+        }
+        $results += @{ Name = $agentName; Status = "[OK]"; Phase = "base" }
     } catch {
-        Write-Host "❌ Failed: $_" -ForegroundColor Red
-        $results += @{ Name = $agentName; Status = "❌ FAILED"; Phase = "base" }
+        Write-Host "FAILED: $_" -ForegroundColor Red
+        $results += @{ Name = $agentName; Status = "[FAILED]"; Phase = "base" }
     }
     Write-Host ""
 }
 
-# ── Phase 2: Orchestrators ───────────────────────────────────────────
-Write-Host "━━━ Phase 2: Orchestrators ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor White
+# -- Phase 2: Orchestrators -------------------------------------------
+Write-Host "--- Phase 2: Orchestrators ---" -ForegroundColor White
 Write-Host ""
 
 foreach ($agentName in $orchestrators) {
     $step++
     Write-Host "  [$step/$($allAgents.Count)] $agentName" -ForegroundColor White
 
-    $deployArgs = @("-AgentName", $agentName)
-    if ($LocalBuild) { $deployArgs += "-LocalBuild" }
-    if ($DryRun) { $deployArgs += "-DryRun" }
-
     try {
-        & (Join-Path $PSScriptRoot "deploy.ps1") @deployArgs
-        $results += @{ Name = $agentName; Status = "✅ OK"; Phase = "orchestrator" }
+        $scriptPath = Join-Path $PSScriptRoot "deploy.ps1"
+        if ($LocalBuild -and $DryRun) {
+            & $scriptPath -AgentName $agentName -LocalBuild -DryRun
+        } elseif ($LocalBuild) {
+            & $scriptPath -AgentName $agentName -LocalBuild
+        } elseif ($DryRun) {
+            & $scriptPath -AgentName $agentName -DryRun
+        } else {
+            & $scriptPath -AgentName $agentName
+        }
+        $results += @{ Name = $agentName; Status = "[OK]"; Phase = "orchestrator" }
     } catch {
-        Write-Host "❌ Failed: $_" -ForegroundColor Red
-        $results += @{ Name = $agentName; Status = "❌ FAILED"; Phase = "orchestrator" }
+        Write-Host "FAILED: $_" -ForegroundColor Red
+        $results += @{ Name = $agentName; Status = "[FAILED]"; Phase = "orchestrator" }
     }
     Write-Host ""
 }
 
-# ── Summary ──────────────────────────────────────────────────────────
+# -- Summary -----------------------------------------------------------
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "  Deploy Summary" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Base Agents:" -ForegroundColor White
 foreach ($r in ($results | Where-Object { $_.Phase -eq "base" })) {
@@ -112,11 +121,11 @@ foreach ($r in ($results | Where-Object { $_.Phase -eq "orchestrator" })) {
 Write-Host ""
 
 # Show registry
-$registryPath = Join-Path $PSScriptRoot "agents" ".registry.json"
+$registryPath = Join-Path (Join-Path $PSScriptRoot "agents") ".registry.json"
 if (Test-Path $registryPath) {
     $registry = Get-Content $registryPath -Raw | ConvertFrom-Json
     $agentCount = ($registry.agents.PSObject.Properties | Measure-Object).Count
-    Write-Host "  📋 Registry: $agentCount agents registered" -ForegroundColor Gray
-    Write-Host "     Location: $registryPath" -ForegroundColor Gray
+    Write-Host "  Registry: $agentCount agents registered" -ForegroundColor Gray
+    Write-Host "  Location: $registryPath" -ForegroundColor Gray
 }
 Write-Host ""

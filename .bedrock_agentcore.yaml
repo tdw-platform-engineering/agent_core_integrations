@@ -1,2 +1,62 @@
-default_agent: null
-agents: {}
+default_agent: agente_presupuesto
+agents:
+  agente_presupuesto:
+    name: agente_presupuesto
+    language: python
+    node_version: '20'
+    entrypoint: D:/Github/agent_core_integrations/src/main.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: docker
+    source_path: D:\Github\agent_core_integrations
+    aws:
+      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81
+      execution_role_auto_create: false
+      account: '588738567193'
+      region: us-east-1
+      ecr_repository: 588738567193.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-agente_presupuesto
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: null
+      agent_arn: null
+      agent_session_id: null
+    codebuild:
+      project_name: bedrock-agentcore-agente_presupuesto-builder
+      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-4559b89511
+      source_bucket: bedrock-agentcore-codebuild-sources-588738567193-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: agente_presupuesto_mem-jcNEZ69loO
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:588738567193:memory/agente_presupuesto_mem-jcNEZ69loO
+      memory_name: agente_presupuesto_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: false
+    identity:
+      credential_providers: []
+      workload: null
+    aws_jwt:
+      enabled: false
+      audiences: []
+      signing_algorithm: ES384
+      issuer_url: null
+      duration_seconds: 300
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+    api_key_env_var_name: null
+    api_key_credential_provider_name: null
+    is_generated_by_agentcore_create: false

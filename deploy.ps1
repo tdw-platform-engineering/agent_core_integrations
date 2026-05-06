@@ -45,23 +45,23 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# ── Paths ────────────────────────────────────────────────────────────
+# -- Paths -------------------------------------------------------------
 $agentsDir = Join-Path $PSScriptRoot "agents"
 $configPath = Join-Path $agentsDir "$AgentName.json"
 $sharedPath = Join-Path $agentsDir "_shared.json"
 $registryPath = Join-Path $agentsDir ".registry.json"
 $yamlPath = Join-Path $PSScriptRoot ".bedrock_agentcore.yaml"
 
-# ── Load shared config ───────────────────────────────────────────────
+# -- Load shared config ------------------------------------------------
 if (-not (Test-Path $sharedPath)) {
-    Write-Host "❌ Shared config not found: $sharedPath" -ForegroundColor Red
+    Write-Host "[ERROR] Shared config not found: $sharedPath" -ForegroundColor Red
     exit 1
 }
 $shared = Get-Content $sharedPath -Raw | ConvertFrom-Json
 
-# ── Load agent config ────────────────────────────────────────────────
+# -- Load agent config -------------------------------------------------
 if (-not (Test-Path $configPath)) {
-    Write-Host "❌ Agent config not found: $configPath" -ForegroundColor Red
+    Write-Host "[ERROR] Agent config not found: $configPath" -ForegroundColor Red
     exit 1
 }
 
@@ -73,27 +73,36 @@ $model = if ($config.model) { $config.model } else { $shared.defaults.model }
 $platform = if ($config.platform) { $config.platform } else { $shared.defaults.platform }
 
 Write-Host ""
-Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║  Deploying Agent: $($config.name)" -ForegroundColor Cyan
-Write-Host "║  Description: $($config.description)" -ForegroundColor Cyan
-Write-Host "║  Runtime: $($config.runtime_name)" -ForegroundColor Cyan
-Write-Host "║  Region: $region" -ForegroundColor Cyan
-Write-Host "║  Model: $model" -ForegroundColor Cyan
-Write-Host "║  Source Bucket: $($shared.aws.source_bucket)" -ForegroundColor Cyan
-Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "  Deploying Agent: $($config.name)" -ForegroundColor Cyan
+Write-Host "  Description: $($config.description)" -ForegroundColor Cyan
+Write-Host "  Runtime: $($config.runtime_name)" -ForegroundColor Cyan
+Write-Host "  Region: $region" -ForegroundColor Cyan
+Write-Host "  Model: $model" -ForegroundColor Cyan
+Write-Host "  Source Bucket: $($shared.aws.source_bucket)" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── Load registry ────────────────────────────────────────────────────
+# -- Load registry -----------------------------------------------------
 $registry = @{ agents = @{} }
 if (Test-Path $registryPath) {
-    $registry = Get-Content $registryPath -Raw | ConvertFrom-Json -AsHashtable
-    if (-not $registry.agents) { $registry.agents = @{} }
+    $registryRaw = Get-Content $registryPath -Raw | ConvertFrom-Json
+    $registry = @{ agents = @{} }
+    if ($registryRaw.agents) {
+        foreach ($prop in $registryRaw.agents.PSObject.Properties) {
+            $registry.agents[$prop.Name] = @{
+                arn = $prop.Value.arn
+                runtime_name = $prop.Value.runtime_name
+                deployed_at = $prop.Value.deployed_at
+            }
+        }
+    }
 }
 
-# ── Resolve sub-agent ARNs from registry (for orchestrators) ─────────
+# -- Resolve sub-agent ARNs from registry (for orchestrators) ----------
 $resolvedSubAgents = @{}
 if ($config.sub_agents) {
-    Write-Host "🔗 Orchestrator mode — resolving sub-agent ARNs from registry..." -ForegroundColor Yellow
+    Write-Host "[ORCHESTRATOR] Resolving sub-agent ARNs from registry..." -ForegroundColor Yellow
 
     $allResolved = $true
     foreach ($prop in $config.sub_agents.PSObject.Properties) {
@@ -101,7 +110,7 @@ if ($config.sub_agents) {
         $subConfig = $prop.Value
         $currentArn = $subConfig.arn
 
-        # If ARN is a placeholder, try to resolve from registry
+        # If ARN is empty or placeholder, try to resolve from registry
         if ($currentArn -match "^REPLACE_" -or [string]::IsNullOrWhiteSpace($currentArn)) {
             $possibleNames = @(
                 "agente-$($alias -replace '_', '-')",
@@ -112,18 +121,18 @@ if ($config.sub_agents) {
             foreach ($name in $possibleNames) {
                 if ($registry.agents.ContainsKey($name)) {
                     $currentArn = $registry.agents[$name].arn
-                    Write-Host "   ✅ $alias → $currentArn (from registry: $name)" -ForegroundColor Green
+                    Write-Host "   [OK] $alias -> $currentArn (from: $name)" -ForegroundColor Green
                     $resolved = $true
                     break
                 }
             }
 
             if (-not $resolved) {
-                Write-Host "   ❌ $alias → NOT FOUND in registry. Deploy '$($possibleNames[0])' first." -ForegroundColor Red
+                Write-Host "   [MISSING] $alias -> NOT FOUND. Deploy '$($possibleNames[0])' first." -ForegroundColor Red
                 $allResolved = $false
             }
         } else {
-            Write-Host "   ✅ $alias → $currentArn (from config)" -ForegroundColor Green
+            Write-Host "   [OK] $alias -> $currentArn (from config)" -ForegroundColor Green
         }
 
         $resolvedSubAgents[$alias] = @{
@@ -134,13 +143,13 @@ if ($config.sub_agents) {
 
     if (-not $allResolved) {
         Write-Host ""
-        Write-Host "❌ Cannot deploy orchestrator — missing sub-agent ARNs." -ForegroundColor Red
+        Write-Host "[ERROR] Cannot deploy orchestrator - missing sub-agent ARNs." -ForegroundColor Red
         Write-Host "   Deploy the base agents first, then retry this orchestrator." -ForegroundColor Red
         exit 1
     }
 }
 
-# ── Build env vars from config ───────────────────────────────────────
+# -- Build env vars from config ----------------------------------------
 $envArgs = @()
 
 # Core vars
@@ -164,7 +173,7 @@ if ($resolvedSubAgents.Count -gt 0) {
 
 # Memory config
 if ($config.features.ENABLE_MEMORY -eq "true" -and $config.memory.memory_name) {
-    Write-Host "📝 Memory enabled: $($config.memory.memory_name)" -ForegroundColor Yellow
+    Write-Host "[MEMORY] Enabled: $($config.memory.memory_name)" -ForegroundColor Yellow
 }
 
 # Load credentials and shared vars from .env
@@ -189,9 +198,9 @@ if (Test-Path $envFile) {
     }
 }
 
-# ── Show summary ─────────────────────────────────────────────────────
+# -- Show summary ------------------------------------------------------
 Write-Host ""
-Write-Host "📋 Environment variables:" -ForegroundColor Gray
+Write-Host "[ENV] Environment variables:" -ForegroundColor Gray
 for ($i = 0; $i -lt $envArgs.Count; $i += 2) {
     $val = $envArgs[$i + 1]
     if ($val -match "SECRET|KEY|TOKEN") {
@@ -206,7 +215,7 @@ for ($i = 0; $i -lt $envArgs.Count; $i += 2) {
 Write-Host ""
 
 if ($DryRun) {
-    Write-Host "🔍 DRY RUN — would execute:" -ForegroundColor Yellow
+    Write-Host "[DRY RUN] Would execute:" -ForegroundColor Yellow
     Write-Host "   1. Backup existing yaml entries" -ForegroundColor Yellow
     Write-Host "   2. agentcore configure --name $($config.runtime_name) ..." -ForegroundColor Yellow
     Write-Host "   3. agentcore deploy ..." -ForegroundColor Yellow
@@ -215,20 +224,76 @@ if ($DryRun) {
     exit 0
 }
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # STEP 1: Backup existing yaml (preserve all other agents)
-# ══════════════════════════════════════════════════════════════════════
-Write-Host "📄 Backing up existing yaml entries..." -ForegroundColor Cyan
+# ======================================================================
+Write-Host "[STEP 1] Backing up existing yaml entries..." -ForegroundColor Cyan
 
 $existingYamlContent = ""
 if (Test-Path $yamlPath) {
     $existingYamlContent = Get-Content $yamlPath -Raw
 }
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # STEP 2: Configure (this overwrites the yaml with only the new agent)
-# ══════════════════════════════════════════════════════════════════════
-Write-Host "⚙️  Configuring agent runtime: $($config.runtime_name)..." -ForegroundColor Cyan
+# ======================================================================
+Write-Host "[STEP 2] Configuring agent runtime: $($config.runtime_name)..." -ForegroundColor Cyan
+
+# The agentcore CLI needs a valid yaml with a real agent entry.
+# Build the seed yaml line by line to ensure correct indentation.
+$seedLines = @(
+    "default_agent: $($config.runtime_name)",
+    "agents:",
+    "  $($config.runtime_name):",
+    "    name: $($config.runtime_name)",
+    "    language: python",
+    "    node_version: '20'",
+    "    entrypoint: $($shared.defaults.entrypoint)",
+    "    deployment_type: container",
+    "    runtime_type: null",
+    "    platform: $platform",
+    "    container_runtime: docker",
+    "    source_path: $PSScriptRoot",
+    "    aws:",
+    "      execution_role: $($shared.aws.execution_role)",
+    "      execution_role_auto_create: false",
+    "      account: '$($shared.aws.account)'",
+    "      region: $region",
+    "      ecr_auto_create: true",
+    "      s3_path: null",
+    "      s3_auto_create: false",
+    "      network_configuration:",
+    "        network_mode: PUBLIC",
+    "        network_mode_config: null",
+    "      protocol_configuration:",
+    "        server_protocol: HTTP",
+    "      observability:",
+    "        enabled: true",
+    "      lifecycle_configuration:",
+    "        idle_runtime_session_timeout: null",
+    "        max_lifetime: null",
+    "    bedrock_agentcore:",
+    "      agent_id: null",
+    "      agent_arn: null",
+    "      agent_session_id: null",
+    "    codebuild:",
+    "      project_name: bedrock-agentcore-$($config.runtime_name)-builder",
+    "      execution_role: $($shared.aws.codebuild_role)",
+    "      source_bucket: $($shared.aws.source_bucket)",
+    "    memory:",
+    "      mode: STM_ONLY",
+    "      memory_id: $($shared.aws.shared_memory_id)",
+    "      memory_arn: null",
+    "      memory_name: $($config.memory.memory_name)",
+    "      event_expiry_days: 7",
+    "      first_invoke_memory_check_done: true",
+    "      was_created_by_toolkit: false",
+    "    identity:",
+    "      credential_providers: []",
+    "      workload: null",
+    "    is_generated_by_agentcore_create: false"
+)
+$seedLines -join "`n" | Set-Content -Path $yamlPath -Encoding UTF8 -NoNewline
 
 $configureArgs = @(
     "--entrypoint", $shared.defaults.entrypoint,
@@ -243,42 +308,66 @@ if ($config.features.ENABLE_MEMORY -ne "true") {
 
 uv run agentcore configure @configureArgs
 
-# ── Patch yaml to use shared resources ───────────────────────────────
+# -- Patch yaml to use shared resources --------------------------------
 Write-Host "   Patching yaml to use shared bucket and roles..." -ForegroundColor Gray
 if (Test-Path $yamlPath) {
-    $yamlText = Get-Content $yamlPath -Raw
-
-    # Use shared source bucket (same for all agents)
-    $yamlText = $yamlText -replace "source_bucket:.*", "source_bucket: $($shared.aws.source_bucket)"
-
-    # Use shared execution role
-    $yamlText = $yamlText -replace "(execution_role:)\s*arn:aws:iam::\d+:role/AmazonBedrockAgentCoreSDKRuntime[^\s]*", "`$1 $($shared.aws.execution_role)"
-
-    # Use shared codebuild role
-    $yamlText = $yamlText -replace "(execution_role:)\s*arn:aws:iam::\d+:role/AmazonBedrockAgentCoreSDKCodeBuild[^\s]*", "`$1 $($shared.aws.codebuild_role)"
-
-    # Disable auto-create for shared resources
-    $yamlText = $yamlText -replace "s3_auto_create:\s*true", "s3_auto_create: false"
-    $yamlText = $yamlText -replace "execution_role_auto_create:\s*true", "execution_role_auto_create: false"
-
-    Set-Content -Path $yamlPath -Value $yamlText -Encoding UTF8
-    Write-Host "   ✅ Shared bucket: $($shared.aws.source_bucket)" -ForegroundColor Green
+    $lines = (Get-Content $yamlPath -Raw) -split "`n"
+    
+    $inAws = $false
+    $inCodebuild = $false
+    
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        
+        # Detect sections (4-space indent)
+        if ($line -match "^\s{4}aws:") { $inAws = $true; $inCodebuild = $false }
+        elseif ($line -match "^\s{4}codebuild:") { $inCodebuild = $true; $inAws = $false }
+        elseif ($line -match "^\s{4}\w" -and $line -notmatch "^\s{6}") { $inAws = $false; $inCodebuild = $false }
+        
+        # Patch aws section
+        if ($inAws) {
+            if ($line -match "^\s{6}execution_role:") {
+                $lines[$i] = "      execution_role: null"
+            }
+            if ($line -match "^\s{6}execution_role_auto_create:") {
+                $lines[$i] = "      execution_role_auto_create: true"
+            }
+            if ($line -match "^\s{6}s3_auto_create:") {
+                $lines[$i] = "      s3_auto_create: false"
+            }
+        }
+        
+        # Patch codebuild section - let CLI auto-create the role
+        if ($inCodebuild) {
+            if ($line -match "^\s{6}execution_role:") {
+                $lines[$i] = "      execution_role: null"
+            }
+            if ($line -match "^\s{6}project_name:") {
+                $lines[$i] = "      project_name: null"
+            }
+            if ($line -match "^\s{6}source_bucket:") {
+                $lines[$i] = "      source_bucket: $($shared.aws.source_bucket)"
+            }
+        }
+        
+        # Fix container_runtime
+        if ($line -match "^\s{4}container_runtime:") {
+            $lines[$i] = "    container_runtime: docker"
+        }
+    }
+    
+    $lines -join "`n" | Set-Content -Path $yamlPath -Encoding UTF8 -NoNewline
+    Write-Host "   [OK] Patched: execution_role, source_bucket, container_runtime" -ForegroundColor Green
 }
 
-# ══════════════════════════════════════════════════════════════════════
-# STEP 3: Merge — read the new yaml, then merge back all previous agents
-# ══════════════════════════════════════════════════════════════════════
-Write-Host "🔀 Merging agent entries into yaml..." -ForegroundColor Cyan
+# ======================================================================
+# STEP 3: Merge - read the new yaml, then merge back all previous agents
+# ======================================================================
+Write-Host "[STEP 3] Merging agent entries into yaml..." -ForegroundColor Cyan
 
 if ($existingYamlContent -and (Test-Path $yamlPath)) {
     $newYamlContent = Get-Content $yamlPath -Raw
 
-    # Strategy: The new yaml has the freshly configured agent.
-    # We need to append all OTHER agent blocks from the old yaml.
-    # 
-    # Since PowerShell doesn't have a native YAML parser, we use a 
-    # simple approach: extract agent blocks by indentation pattern.
-    
     # Get the runtime_name of the newly configured agent (it's now default_agent)
     $newAgentKey = $config.runtime_name
 
@@ -320,15 +409,22 @@ if ($existingYamlContent -and (Test-Path $yamlPath)) {
             $appendContent += "`n$block"
         }
         Add-Content -Path $yamlPath -Value $appendContent -Encoding UTF8
-        Write-Host "   ✅ Merged $($oldAgentBlocks.Count) existing agent(s) back into yaml" -ForegroundColor Green
+        Write-Host "   [OK] Merged $($oldAgentBlocks.Count) existing agent(s) back into yaml" -ForegroundColor Green
     }
 }
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # STEP 4: Deploy
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 Write-Host ""
-Write-Host "🚀 Deploying..." -ForegroundColor Green
+Write-Host "[STEP 4] Deploying..." -ForegroundColor Green
+
+# Ensure default_agent points to our agent before deploy
+if (Test-Path $yamlPath) {
+    $yamlText = Get-Content $yamlPath -Raw
+    $yamlText = $yamlText -replace "^default_agent:.*", "default_agent: $($config.runtime_name)"
+    Set-Content -Path $yamlPath -Value $yamlText -Encoding UTF8
+}
 
 $deployArgs = @()
 if ($LocalBuild) {
@@ -338,20 +434,18 @@ if ($LocalBuild) {
 
 uv run agentcore deploy @envArgs @deployArgs
 
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 # STEP 5: Capture ARN and save to registry
-# ══════════════════════════════════════════════════════════════════════
+# ======================================================================
 Write-Host ""
-Write-Host "📋 Capturing deployed ARN..." -ForegroundColor Cyan
+Write-Host "[STEP 5] Capturing deployed ARN..." -ForegroundColor Cyan
 
 $deployedArn = $null
 
 # Primary: read from the yaml (agentcore updates it after deploy)
 if (Test-Path $yamlPath) {
     $yamlContent = Get-Content $yamlPath -Raw
-    # Look for the agent_arn of the current agent
-    $arnPattern = "agent_arn:\s*(arn:aws:bedrock-agentcore:[^\s]+)"
-    
+
     # Find the section for our agent and extract its ARN
     $inOurAgent = $false
     foreach ($line in ($yamlContent -split "`n")) {
@@ -389,15 +483,15 @@ if ($deployedArn) {
     $registryJson = $registry | ConvertTo-Json -Depth 5
     Set-Content -Path $registryPath -Value $registryJson -Encoding UTF8
 
-    Write-Host "   ✅ ARN saved to registry: $deployedArn" -ForegroundColor Green
+    Write-Host "   [OK] ARN saved to registry: $deployedArn" -ForegroundColor Green
 } else {
-    Write-Host "   ⚠️  Could not capture ARN automatically." -ForegroundColor Yellow
+    Write-Host "   [WARN] Could not capture ARN automatically." -ForegroundColor Yellow
     Write-Host "   Run 'uv run agentcore status' and check the yaml." -ForegroundColor Yellow
 }
 
-# ── Done ─────────────────────────────────────────────────────────────
+# -- Done --------------------------------------------------------------
 Write-Host ""
-Write-Host "✅ Agent '$($config.name)' deployed successfully!" -ForegroundColor Green
+Write-Host "[DONE] Agent '$($config.name)' deployed successfully!" -ForegroundColor Green
 Write-Host "   Runtime: $($config.runtime_name)" -ForegroundColor Gray
 Write-Host "   Active in yaml: default_agent = $($config.runtime_name)" -ForegroundColor Gray
 Write-Host ""
