@@ -225,17 +225,79 @@ if ($DryRun) {
 }
 
 # ======================================================================
-# STEP 1: Backup existing yaml (preserve all other agents)
+# STEP 1: Ensure yaml is ready for configure
 # ======================================================================
-Write-Host "[STEP 1] Backing up existing yaml entries..." -ForegroundColor Cyan
+Write-Host "[STEP 1] Preparing yaml..." -ForegroundColor Cyan
 
-$existingYamlContent = ""
+$needsSeed = $true
 if (Test-Path $yamlPath) {
-    $existingYamlContent = Get-Content $yamlPath -Raw
+    $existingYaml = Get-Content $yamlPath -Raw
+    # If yaml has at least one agent entry, no need for seed
+    if ($existingYaml -match "^\s{2}\w[\w_-]*:" -and $existingYaml -notmatch "^agents:\s*\{\}") {
+        $needsSeed = $false
+        Write-Host "   Existing yaml with agents found - will add new agent" -ForegroundColor Gray
+    }
+}
+
+if ($needsSeed) {
+    Write-Host "   Writing seed yaml (no existing agents found)..." -ForegroundColor Gray
+    $seedLines = @(
+        "default_agent: $($config.runtime_name)",
+        "agents:",
+        "  $($config.runtime_name):",
+        "    name: $($config.runtime_name)",
+        "    language: python",
+        "    node_version: '20'",
+        "    entrypoint: $($shared.defaults.entrypoint)",
+        "    deployment_type: container",
+        "    runtime_type: null",
+        "    platform: $platform",
+        "    container_runtime: docker",
+        "    source_path: $PSScriptRoot",
+        "    aws:",
+        "      execution_role: null",
+        "      execution_role_auto_create: true",
+        "      account: '$($shared.aws.account)'",
+        "      region: $region",
+        "      ecr_auto_create: true",
+        "      s3_path: null",
+        "      s3_auto_create: false",
+        "      network_configuration:",
+        "        network_mode: PUBLIC",
+        "        network_mode_config: null",
+        "      protocol_configuration:",
+        "        server_protocol: HTTP",
+        "      observability:",
+        "        enabled: true",
+        "      lifecycle_configuration:",
+        "        idle_runtime_session_timeout: null",
+        "        max_lifetime: null",
+        "    bedrock_agentcore:",
+        "      agent_id: null",
+        "      agent_arn: null",
+        "      agent_session_id: null",
+        "    codebuild:",
+        "      project_name: null",
+        "      execution_role: null",
+        "      source_bucket: $($shared.aws.source_bucket)",
+        "    memory:",
+        "      mode: STM_ONLY",
+        "      memory_id: $($shared.aws.shared_memory_id)",
+        "      memory_arn: null",
+        "      memory_name: $($config.memory.memory_name)",
+        "      event_expiry_days: 7",
+        "      first_invoke_memory_check_done: true",
+        "      was_created_by_toolkit: false",
+        "    identity:",
+        "      credential_providers: []",
+        "      workload: null",
+        "    is_generated_by_agentcore_create: false"
+    )
+    $seedLines -join "`n" | Set-Content -Path $yamlPath -Encoding UTF8 -NoNewline
 }
 
 # ======================================================================
-# STEP 2: Configure (this overwrites the yaml with only the new agent)
+# STEP 2: Configure
 # ======================================================================
 Write-Host "[STEP 2] Configuring agent runtime: $($config.runtime_name)..." -ForegroundColor Cyan
 
@@ -361,63 +423,10 @@ if (Test-Path $yamlPath) {
 }
 
 # ======================================================================
-# STEP 3: Merge - read the new yaml, then merge back all previous agents
-# ======================================================================
-Write-Host "[STEP 3] Merging agent entries into yaml..." -ForegroundColor Cyan
-
-if ($existingYamlContent -and (Test-Path $yamlPath)) {
-    $newYamlContent = Get-Content $yamlPath -Raw
-
-    # Get the runtime_name of the newly configured agent (it's now default_agent)
-    $newAgentKey = $config.runtime_name
-
-    # Extract all agent blocks from the OLD yaml (except the one we just configured)
-    $oldAgentBlocks = @{}
-    $currentAgent = ""
-    $currentBlock = @()
-    
-    foreach ($line in ($existingYamlContent -split "`n")) {
-        # Detect agent entry start (2-space indent, ends with colon)
-        if ($line -match "^  (\w[\w_-]*):$" -and $line -notmatch "^\s{4}") {
-            # Save previous block
-            if ($currentAgent -and $currentAgent -ne $newAgentKey) {
-                $oldAgentBlocks[$currentAgent] = $currentBlock -join "`n"
-            }
-            $currentAgent = $Matches[1]
-            $currentBlock = @($line)
-        } elseif ($currentAgent -and ($line -match "^\s{4}" -or $line -match "^\s*$")) {
-            # Lines belonging to current agent (4+ spaces indent)
-            $currentBlock += $line
-        } else {
-            # Save last block if we hit a non-agent line
-            if ($currentAgent -and $currentAgent -ne $newAgentKey) {
-                $oldAgentBlocks[$currentAgent] = $currentBlock -join "`n"
-            }
-            $currentAgent = ""
-            $currentBlock = @()
-        }
-    }
-    # Don't forget last block
-    if ($currentAgent -and $currentAgent -ne $newAgentKey) {
-        $oldAgentBlocks[$currentAgent] = $currentBlock -join "`n"
-    }
-
-    # Append old agent blocks to the new yaml
-    if ($oldAgentBlocks.Count -gt 0) {
-        $appendContent = ""
-        foreach ($block in $oldAgentBlocks.Values) {
-            $appendContent += "`n$block"
-        }
-        Add-Content -Path $yamlPath -Value $appendContent -Encoding UTF8
-        Write-Host "   [OK] Merged $($oldAgentBlocks.Count) existing agent(s) back into yaml" -ForegroundColor Green
-    }
-}
-
-# ======================================================================
-# STEP 4: Deploy
+# STEP 3: Deploy
 # ======================================================================
 Write-Host ""
-Write-Host "[STEP 4] Deploying..." -ForegroundColor Green
+Write-Host "[STEP 3] Deploying..." -ForegroundColor Green
 
 # Ensure default_agent points to our agent before deploy
 if (Test-Path $yamlPath) {
@@ -435,7 +444,7 @@ if ($LocalBuild) {
 uv run agentcore deploy @envArgs @deployArgs
 
 # ======================================================================
-# STEP 5: Capture ARN and save to registry
+# STEP 4: Capture ARN and save to registry
 # ======================================================================
 Write-Host ""
 Write-Host "[STEP 5] Capturing deployed ARN..." -ForegroundColor Cyan
