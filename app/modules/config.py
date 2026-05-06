@@ -3,6 +3,9 @@
 import os
 
 
+# ── Agent Identity ───────────────────────────────────────────────────
+AGENT_NAME = os.getenv("AGENT_NAME", "")
+
 # ── Core ─────────────────────────────────────────────────────────────
 BYPASS_TOOL_CONSENT = os.getenv("BYPASS_TOOL_CONSENT", "true")
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
@@ -52,3 +55,7 @@ CONVERSATION_WINDOW_SIZE = int(os.getenv("CONVERSATION_WINDOW_SIZE", "10"))  # m
 
 # ── Cart ────────────────────────────────────────────────────────
 ENABLE_CART = os.getenv("ENABLE_CART", "false").lower() == "true"
+
+# ── Orchestrator (sub-agent invocation) ─────────────────────────
+ENABLE_ORCHESTRATOR = os.getenv("ENABLE_ORCHESTRATOR", "false").lower() == "true"
+SUB_AGENTS_JSON = os.getenv("SUB_AGENTS", "")  # JSON string with sub-agent ARNs

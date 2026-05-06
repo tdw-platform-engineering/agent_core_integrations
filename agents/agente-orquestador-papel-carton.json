@@ -1,0 +1,34 @@
+{
+  "name": "agente-orquestador-papel-carton",
+  "description": "Agente orquestador para papel y cartón",
+  "runtime_name": "agente_orq_papel_carton",
+  "prompt": "agente-orquestador-papel-carton",
+  "features": {
+    "ENABLE_ATHENA": "false",
+    "ENABLE_MEMORY": "true",
+    "ENABLE_MCP": "false",
+    "ENABLE_MULTI_AGENT": "false",
+    "ENABLE_WEB_SEARCH": "false",
+    "ENABLE_KNOWLEDGE_BASE": "false",
+    "ENABLE_BROWSER": "false",
+    "ENABLE_CART": "false",
+    "ENABLE_ORCHESTRATOR": "true"
+  },
+  "sub_agents": {
+    "ventas_papel": {
+      "arn": "REPLACE_WITH_AGENTE_VENTAS_PAPEL_ARN",
+      "description": "Agente de ventas de papel — consulta fact.ventas_papel"
+    },
+    "ventas_carton": {
+      "arn": "REPLACE_WITH_AGENTE_VENTAS_CARTON_ARN",
+      "description": "Agente de ventas de cartón — consulta fact.ventas_carton"
+    }
+  },
+  "memory": {
+    "shared": true,
+    "memory_name": "agente_orq_papel_carton_mem"
+  },
+  "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+  "region": "us-east-1",
+  "platform": "linux/arm64"
+}

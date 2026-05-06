@@ -1,0 +1,23 @@
+{
+  "name": "agente-presupuesto",
+  "description": "Agente de presupuestos",
+  "runtime_name": "agente_presupuesto",
+  "prompt": "agente-presupuesto",
+  "features": {
+    "ENABLE_ATHENA": "true",
+    "ENABLE_MEMORY": "true",
+    "ENABLE_MCP": "false",
+    "ENABLE_MULTI_AGENT": "false",
+    "ENABLE_WEB_SEARCH": "false",
+    "ENABLE_KNOWLEDGE_BASE": "false",
+    "ENABLE_BROWSER": "false",
+    "ENABLE_CART": "false"
+  },
+  "memory": {
+    "shared": false,
+    "memory_name": "agente_presupuesto_mem"
+  },
+  "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+  "region": "us-east-1",
+  "platform": "linux/arm64"
+}

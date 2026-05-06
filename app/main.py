@@ -19,7 +19,10 @@ from .modules.config import (
     ENABLE_ATHENA,
     ATHENA_LAMBDA_NAME,
     ENABLE_CART,
+    ENABLE_ORCHESTRATOR,
+    SUB_AGENTS_JSON,
     CONVERSATION_WINDOW_SIZE,
+    AGENT_NAME,
 )
 
 os.environ["BYPASS_TOOL_CONSENT"] = BYPASS_TOOL_CONSENT
@@ -33,6 +36,7 @@ from .modules.hooks import validate_request, format_response
 from .prompts import build_system_prompt
 
 SYSTEM_PROMPT = build_system_prompt(
+    agent_name=AGENT_NAME,
     enable_knowledge_base=ENABLE_KNOWLEDGE_BASE,
     enable_athena=ENABLE_ATHENA,
     enable_cart=ENABLE_CART,
@@ -42,7 +46,12 @@ SYSTEM_PROMPT = build_system_prompt(
 app = BedrockAgentCoreApp()
 log = app.logger
 
-# ── Log active features at startup ──────────────────────────────────
+# ── Log active agent and features at startup ────────────────────────
+if AGENT_NAME:
+    log.info("🤖 Agent loaded: %s", AGENT_NAME)
+else:
+    log.info("🤖 No AGENT_NAME set — using generic system prompt")
+
 _features = {
     "mcp": ENABLE_MCP,
     "multi_agent": ENABLE_MULTI_AGENT,
@@ -52,6 +61,7 @@ _features = {
     "browser": ENABLE_BROWSER,
     "athena": ENABLE_ATHENA,
     "cart": ENABLE_CART,
+    "orchestrator": ENABLE_ORCHESTRATOR,
 }
 log.info("Active features: %s", {k: v for k, v in _features.items() if v})
 log.info("System prompt assembled: %d chars (~%d tokens)", len(SYSTEM_PROMPT), len(SYSTEM_PROMPT) // 4)
@@ -90,6 +100,20 @@ def _collect_tools() -> list:
         from .modules.cart_provider import get_cart_tools
 
         tools.extend(get_cart_tools())
+
+    if ENABLE_ORCHESTRATOR:
+        from .modules.orchestrator import get_orchestrator_tools, register_sub_agents
+        import json as _json
+
+        # Register sub-agents from env var (JSON string)
+        if SUB_AGENTS_JSON:
+            try:
+                sub_agents = _json.loads(SUB_AGENTS_JSON)
+                register_sub_agents(sub_agents)
+            except _json.JSONDecodeError as e:
+                log.error("Failed to parse SUB_AGENTS env var: %s", e)
+
+        tools.extend(get_orchestrator_tools())
 
     return tools
 
