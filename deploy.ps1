@@ -177,7 +177,9 @@ if (Test-Path $envFile) {
             $sharedKeys = @(
                 "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN",
                 "ATHENA_LAMBDA_NAME", "ATHENA_LAMBDA_REGION",
-                "MEMORY_ID", "KNOWLEDGE_BASE_ID"
+                "MEMORY_ID", "MEMORY_ACTOR_ID",
+                "KNOWLEDGE_BASE_ID", "KNOWLEDGE_BASE_REGION",
+                "ENABLE_THINKING", "THINKING_BUDGET"
             )
             if ($key -in $sharedKeys) {
                 $envArgs += "--env"
