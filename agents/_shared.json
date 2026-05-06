@@ -1,16 +1,16 @@
-{
-  "description": "Shared infrastructure config - used by all agents",
-  "aws": {
-    "account": "588738567193",
-    "region": "us-east-1",
-    "execution_role": "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81",
-    "codebuild_role": "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-c2ab6e2f81",
-    "source_bucket": "bedrock-agentcore-codebuild-sources-588738567193-us-east-1",
-    "shared_memory_id": "agentcore_bou_mem-Nlt3UJ63C4"
-  },
-  "defaults": {
-    "model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
-    "platform": "linux/arm64",
-    "entrypoint": "src/main.py"
-  }
+﻿{
+    "description":  "Shared infrastructure config - used by all agents",
+    "aws":  {
+                "account":  "588738567193",
+                "region":  "us-east-1",
+                "execution_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-4559b89511",
+                "codebuild_role":  "arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-4559b89511",
+                "source_bucket":  "bedrock-agentcore-codebuild-sources-588738567193-us-east-1",
+                "shared_memory_id":  "agentcore_bou_mem-Nlt3UJ63C4"
+            },
+    "defaults":  {
+                     "model":  "us.anthropic.claude-sonnet-4-20250514-v1:0",
+                     "platform":  "linux/arm64",
+                     "entrypoint":  "src/main.py"
+                 }
 }

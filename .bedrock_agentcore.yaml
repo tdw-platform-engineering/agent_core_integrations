@@ -1,21 +1,21 @@
-default_agent: agente_presupuesto
+default_agent: agente_orq_papel_carton
 agents:
-  agente_presupuesto:
-    name: agente_presupuesto
+  agente_orq_papel_carton:
+    name: agente_orq_papel_carton
     language: python
     node_version: '20'
     entrypoint: D:/Github/agent_core_integrations/src/main.py
     deployment_type: container
     runtime_type: null
     platform: linux/arm64
-    container_runtime: docker
+    container_runtime: none
     source_path: D:\Github\agent_core_integrations
     aws:
-      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-c2ab6e2f81
+      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-4d87c6933b
       execution_role_auto_create: false
       account: '588738567193'
       region: us-east-1
-      ecr_repository: 588738567193.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-agente_presupuesto
+      ecr_repository: 588738567193.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-agente_orq_papel_carton
       ecr_auto_create: false
       s3_path: null
       s3_auto_create: false
@@ -34,17 +34,17 @@ agents:
       agent_arn: null
       agent_session_id: null
     codebuild:
-      project_name: bedrock-agentcore-agente_presupuesto-builder
-      execution_role: arn:aws:iam::588738567193:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-4559b89511
-      source_bucket: bedrock-agentcore-codebuild-sources-588738567193-us-east-1
+      project_name: null
+      execution_role: null
+      source_bucket: null
     memory:
       mode: STM_ONLY
-      memory_id: agente_presupuesto_mem-jcNEZ69loO
-      memory_arn: arn:aws:bedrock-agentcore:us-east-1:588738567193:memory/agente_presupuesto_mem-jcNEZ69loO
-      memory_name: agente_presupuesto_mem
+      memory_id: agente_orq_papel_carton_mem-6onuBQAWpR
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:588738567193:memory/agente_orq_papel_carton_mem-6onuBQAWpR
+      memory_name: agente_orq_papel_carton_mem
       event_expiry_days: 30
       first_invoke_memory_check_done: true
-      was_created_by_toolkit: false
+      was_created_by_toolkit: true
     identity:
       credential_providers: []
       workload: null

@@ -1,4 +1,19 @@
-{
-  "description": "Auto-generated registry of deployed agent ARNs. Updated by deploy.ps1 after each successful deploy.",
-  "agents": {}
+﻿{
+    "agents":  {
+                   "agente-presupuesto":  {
+                                              "runtime_name":  "agente_presupuesto",
+                                              "deployed_at":  "2026-05-05T19:35:57Z",
+                                              "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_presupuesto-0p1Wv78PLT"
+                                          },
+                   "agente-ventas-papel":  {
+                                               "runtime_name":  "agente_ventas_papel",
+                                               "deployed_at":  "2026-05-05T19:35:01Z",
+                                               "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_papel-oAXGC4295F"
+                                           },
+                   "agente-ventas-carton":  {
+                                                "runtime_name":  "agente_ventas_carton",
+                                                "deployed_at":  "2026-05-05T19:34:03Z",
+                                                "arn":  "arn:aws:bedrock-agentcore:us-east-1:588738567193:runtime/agente_ventas_carton-ww70tyExte"
+                                            }
+               }
 }
